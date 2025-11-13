@@ -69,10 +69,6 @@ class Ticket(models.Model):
     # Foreign key to link the ticket to a booking
     booking = models.ForeignKey('Booking', on_delete=models.CASCADE, related_name='tickets')  # Each ticket belongs to one booking
 
-    def clean(self):
-        """Ensure the passenger is at least 18 years old"""
-        if self.passenger_dob > date.today().replace(year=date.today().year - 18):
-            raise ValidationError('Passenger must be at least 18 years old.')
 
     def __str__(self):
         return f"Ticket {self.ticket_id} - {self.seat_number} for {self.passenger_name}"
