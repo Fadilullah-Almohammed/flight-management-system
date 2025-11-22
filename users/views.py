@@ -1,20 +1,26 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .forms import PassengerCreationForm, EmailAuthenticationForm
-from .models import PassengerProfile
+from .models import PassengerProfile, Admin
 from bookings.models import Booking
 
 def passenger_register(request: HttpRequest) -> HttpResponse:
+
     if request.method == 'POST':
+    
         form = PassengerCreationForm(request.POST)
+    
         if form.is_valid():
+    
             user = form.save()
             messages.success(request, "Registration successful. Please log in.")
+    
             return redirect('user_login')
+    
         else:
             messages.error(request, "Please correct the errors below")
     else:
@@ -24,18 +30,26 @@ def passenger_register(request: HttpRequest) -> HttpResponse:
 
 
 def user_login(request: HttpRequest) -> HttpResponse:
+
+
     if request.method == 'POST':
+
         form = EmailAuthenticationForm(request, data=request.POST)
+
         if form.is_valid():
+
             email = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
+
             try:
                 user = User.objects.get(email=email)
                 user = authenticate(request, username=user.username, password=password)
+
                 if user is not None:
+
                     login(request, user)
                     if user.is_staff:
-                        return redirect('admin:index')
+                        return redirect('admin_dashboard')
                     else:
                         return redirect('passenger_dashboard')
                 else:
@@ -48,13 +62,21 @@ def user_login(request: HttpRequest) -> HttpResponse:
         form = EmailAuthenticationForm()
 
     return render(request, 'users/login.html', {'form': form})
-            
+
+@login_required
+def user_logout(request: HttpRequest) -> HttpResponse:
+
+    logout(request)
+    messages.success(request, 'You have been logged out successfully')
+
+    return redirect('user_login')
 
 @login_required
 def passenger_dashboard(request):
     passenger = None
     bookings = None
 
+    # ------------------- ! NOT TESTED ! -------------------
     if request.method == 'POST':
         passport = request.POST.get('passport_number')
         try:
@@ -68,11 +90,51 @@ def passenger_dashboard(request):
         'passenger': passenger,
         'bookings': bookings,
     })
+    # ------------------- ! NOT TESTED ! -------------------
+
+
+@login_required
+def admin_dashboard(request):
+
+    if not request.user.is_staff:
+        messages.error(request, 'Sorry. You are not authorized to view that page!')
+        return redirect('passenger_dashboard')
+
+    return render(request, 'users/admin_dashboard.html')
+
+
 
 @login_required
 def view_profile(request):
-    passenger = request.user.passenger_profile
-    return render(request, 'users/view_profile.html', {'passenger': passenger})
+    
+    user = request.user
+    profile_data = None
+    user_type = None
+
+
+    if user.is_staff:
+        user_type = 'admin'
+
+        try:
+            profile_data = user.admin_profile
+        except Admin.DoesNotExist:
+            profile_data = None
+    else:
+        user_type = 'passenger'
+
+        try:
+            profile_data = user.passenger_profile
+        except PassengerProfile.DoesNotExist:
+            profile_data = None
+    
+    context = {
+        'user_obj': user,
+        'user_type': user_type,
+        'profile': profile_data
+    }
+
+    return render(request, 'users/profile.html', context)
+
 
 @login_required
 def view_booked_flights(request):
@@ -80,16 +142,6 @@ def view_booked_flights(request):
     bookings = Booking.objects.filter(passenger=passenger)
     return render(request, 'users/view_booked_flights.html', {'bookings': bookings})
 
-@login_required
-def admin_dashboard(request):
-    if request.method == 'POST':
-        destination = request.POST.get('destination')
-        if destination == 'manage_users':
-            return redirect('admin_manage_users') 
-        elif destination == 'view_reports':
-            return redirect('admin_view_reports') 
-        elif destination == 'site_settings':
-            return redirect('admin_site_settings')
 
     context = {
         'page_title': 'Admin Control Panel'
@@ -100,9 +152,6 @@ def admin_dashboard(request):
 def admin_manage_users(request):
     return render(request, 'users/admin_manage_users.html')
 
-@login_required
-def admin_view_reports(request):
-    return render(request, 'users/admin_view_reports.html')
 
 @login_required
 def admin_site_settings(request):

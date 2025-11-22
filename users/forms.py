@@ -13,6 +13,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 
 from .models import PassengerProfile
+from datetime import date
 
 
 class PassengerCreationForm(UserCreationForm):
@@ -25,15 +26,57 @@ class PassengerCreationForm(UserCreationForm):
     """
 
     email = forms.EmailField(required=True)
-    phone_number = forms.CharField(max_length=20, required=False)
-    passport_number = forms.CharField(max_length=50, required=False)
+    first_name = forms.CharField(required=True)
+    last_name = forms.CharField(required=True)
+    date_of_birth = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+
+    passport = forms.CharField(max_length=7, required=False)
+    phone_number = forms.CharField(max_length=10, required=False)
+    nationality = forms.CharField(max_length=10, required=False)
 
     class Meta(UserCreationForm.Meta):
         """
         Configuration class for the PassengerCreationForm.
         """
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name')
+        fields = ('email', 'first_name', 'last_name')
+
+
+    def __init__(self, *args, **kwargs):
+        """
+        This adds Bootstrap styling 'form-control' class
+        to all fields to render correctly
+        """
+        super().__init__(*args, **kwargs)
+
+        for field_name, field in self.fields.items():
+
+            field.widget.attrs.update({
+                'class': 'form-control',
+                'placeholder': field.label or field_name
+            })
+
+        self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Password'})
+        self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirm Password'})
+
+
+    def clean_date_of_birth(self):
+        """
+        A custom validation method that checks if the user is aged 18 or above.
+        Automatically called when form.is_valid() is invoked.
+        """
+
+        dob = self.cleaned_data.get('date_of_birth')
+
+        if dob:
+            today = date.today()
+
+            cutoff_date = today.replace(year=today.year - 18)
+
+            if dob > cutoff_date:
+                raise forms.ValidationError("Sorry. You must be at least 18 years old to be able to register!")
+            
+        return dob
 
     def save(self, commit=True):
         """
@@ -50,16 +93,22 @@ class PassengerCreationForm(UserCreationForm):
 
         user = super().save(commit=False)
 
+
+        user.username = self.cleaned_data.get('email')
+
         # very important. This ensures this user is not an admin
         user.is_staff = False
 
         if commit:
             user.save()
 
+
             PassengerProfile.objects.create(
                 user=user,
-                phone_number=self.cleaned_data.get('phone_number'),
-                passport_number=self.cleaned_data.get('passport_number')
+                phone_number=self.cleaned_data.get('phone_number') or None,
+                passport=self.cleaned_data.get('passport') or None,
+                date_of_birth=self.cleaned_data.get('date_of_birth'),
+                nationality=self.cleaned_data.get('nationality') or None
             )
 
         return user
@@ -67,7 +116,7 @@ class PassengerCreationForm(UserCreationForm):
 
 class EmailAuthenticationForm(AuthenticationForm):
     """
-    Custom authentication form that uses email instead of username.
+    Custom authentication form that uses email address of user.
     """
     username = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'class': 'form-control'}))
 

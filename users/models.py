@@ -5,7 +5,7 @@ class Admin(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='profile'
+        related_name='admin_profile'
     )
     hire_date = models.DateField(auto_now_add=True)
 
@@ -21,10 +21,10 @@ class PassengerProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='passenger_profile',
     )
-    passport = models.CharField(max_length=7, unique=True, null=False)
-    date_of_birth = models.DateField(default='2000-01-01')
-    phone_number = models.CharField(max_length=10, null=False)
-    nationality = models.CharField(max_length=50, null=False)
+    passport = models.CharField(max_length=7, unique=True, null=True, blank=True)
+    date_of_birth = models.DateField(default='2000-01-01', null=False)
+    phone_number = models.CharField(max_length=10, null=True, blank=True)
+    nationality = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return self.user.username

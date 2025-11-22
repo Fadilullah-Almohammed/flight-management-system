@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Flight Management{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Flight Management</h2>
+            <p class="text-muted">View and manage all scheduled flights.</p>
+        </div>
+        <a href="#" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Add New Flight
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="p-3 border-0">Flight No.</th>
+                            <th class="p-3 border-0">Origin</th>
+                            <th class="p-3 border-0">Destination</th>
+                            <th class="p-3 border-0">Aircraft</th>
+                            <th class="p-3 border-0">Date & Time</th>
+                            <th class="p-3 border-0">Price (Eco)</th>
+                            <th class="p-3 border-0 text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for flight in flights %}
+                        <tr>
+                            <td class="p-3 fw-bold text-primary">
+                                {{ flight.flight_number }}
+                            </td>
+                            <td class="p-3">
+                                <span class="badge bg-light text-dark border">
+                                    {{ flight.origin_airport.code }}
+                                </span>
+                                <small class="d-block text-muted">{{ flight.origin_airport.city }}</small>
+                            </td>
+                            <td class="p-3">
+                                <span class="badge bg-light text-dark border">
+                                    {{ flight.destination_airport.code }}
+                                </span>
+                                <small class="d-block text-muted">{{ flight.destination_airport.city }}</small>
+                            </td>
+                            <td class="p-3">
+                                {{ flight.aircraft.model }}
+                            </td>
+                            <td class="p-3">
+                                <div>{{ flight.departure_time|date:"M d, Y" }}</div>
+                                <small class="text-muted">{{ flight.departure_time|time:"H:i" }}</small>
+                            </td>
+                            <td class="p-3">
+                                {{ flight.economy_price }} SAR
+                            </td>
+                            <td class="p-3 text-end">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="p-5 text-center text-muted">
+                                <i class="bi bi-airplane-engines display-4 d-block mb-3 opacity-50"></i>
+                                No flights have been scheduled yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
