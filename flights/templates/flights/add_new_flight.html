@@ -2,57 +2,191 @@
 
 {% block title %}Add New Flight{% endblock %}
 
+{% block extra_css %}
+<style>
+    .form-card {
+        border: 0;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1rem 0 rgba(0, 0, 0, 0.05);
+    }
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    .section-title {
+        color: #0d6efd;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
+    <div class="col-md-10 col-lg-8">
         
-        <div class="mb-3">
-            <a href="{% url 'admin_dashboard' %}" class="text-decoration-none">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Add New Flight Schedule</h2>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Back to Dashboard
             </a>
         </div>
 
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-body p-5">
-                <h3 class="mb-4 fw-bold">Add New Flight</h3>
+        <div class="card form-card">
+            <div class="card-body p-4 p-sm-5">
                 
-                <form method="post" novalidate>
+                <form method="post" id="addFlightForm" novalidate>
                     {% csrf_token %}
-                    
+
                     {% if form.non_field_errors %}
                         <div class="alert alert-danger">
                             {% for error in form.non_field_errors %}{{ error }}{% endfor %}
                         </div>
                     {% endif %}
 
-                    {% for field in form %}
-                        <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
-                                {{ field.label }}
-                            </label>
-                            
-                            {{ field }}
-                            
-                            {% if field.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ field.errors.0 }}
-                                </div>
-                            {% endif %}
-                            
-                            {% if field.help_text %}
-                                <div class="form-text text-muted">{{ field.help_text }}</div>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
+                    <h5 class="section-title">Flight Details</h5>
                     
-                    <div class="d-grid mt-4">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.flight_number.id_for_label }}" class="form-label">Flight Number</label>
+                            {{ form.flight_number }}
+                            <div class="text-danger small">{{ form.flight_number.errors.0 }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.aircraft.id_for_label }}" class="form-label">Aircraft Type</label>
+                            {{ form.aircraft }}
+                            <div class="text-danger small">{{ form.aircraft.errors.0 }}</div>
+                        </div>
+                    </div>
+
+                    <h5 class="section-title">Route</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.departure_airport.id_for_label }}" class="form-label">Departure Airport</label>
+                            {{ form.departure_airport }}
+                            <div class="text-danger small">{{ form.origin_airport.errors.0 }}</div>
+                            <div class="invalid-feedback" id="originError"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.arrival_airport.id_for_label }}" class="form-label">Arrival Airport</label>
+                            {{ form.arrival_airport }}
+                            <div class="text-danger small">{{ form.destination_airport.errors.0 }}</div>
+                            <div class="invalid-feedback" id="destError">Destination cannot be the same as Origin.</div>
+                        </div>
+                    </div>
+
+                    <h5 class="section-title">Schedule</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.departure_datetime.id_for_label }}" class="form-label">Departure Time</label>
+                            {{ form.departure_datetime }}
+                            <div class="text-danger small">{{ form.departure_datetime.errors.0 }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.arrival_datetime.id_for_label }}" class="form-label">Arrival Time</label>
+                            {{ form.arrival_datetime }}
+                            <div class="text-danger small">{{ form.arrival_datetime.errors.0 }}</div>
+                            <div class="invalid-feedback" id="timeError">
+                                Arrival time must be AFTER the departure time.
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="section-title">Pricing (SAR)</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.economy_price.id_for_label }}" class="form-label">Economy</label>
+                            <div class="input-group">
+                                <span class="input-group-text">SAR</span>
+                                {{ form.economy_price }}
+                            </div>
+                            <div class="text-danger small">{{ form.economy_price.errors.0 }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.business_price.id_for_label }}" class="form-label">Business</label>
+                            <div class="input-group">
+                                <span class="input-group-text">SAR</span>
+                                {{ form.business_price }}
+                            </div>
+                            <div class="text-danger small">{{ form.business_price.errors.0 }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.first_class_price.id_for_label }}" class="form-label">First Class</label>
+                            <div class="input-group">
+                                <span class="input-group-text">SAR</span>
+                                {{ form.first_class_price }}
+                            </div>
+                            <div class="text-danger small">{{ form.first_class_price.errors.0 }}</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-5">
                         <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-plus-circle me-2"></i> Create Flight
+                            <i class="bi bi-save me-2"></i> Save Flight Schedule
                         </button>
                     </div>
+
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('addFlightForm');
+        
+        // Django ID convention: id_fieldname
+        const departureInput = document.getElementById('id_departure_datetime');
+        const arrivalInput = document.getElementById('id_arrival_datetime');
+        const timeError = document.getElementById('timeError');
+        
+        const originInput = document.getElementById('id_origin_airport');
+        const destInput = document.getElementById('id_destination_airport');
+        const destError = document.getElementById('destError');
+
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            // Reset errors
+            departureInput.classList.remove('is-invalid');
+            arrivalInput.classList.remove('is-invalid');
+            timeError.style.display = 'none';
+            
+            if(originInput) originInput.classList.remove('is-invalid');
+            if(destInput) destInput.classList.remove('is-invalid');
+            if(destError) destError.style.display = 'none';
+
+            // Time Validation
+            if (departureInput.value && arrivalInput.value) {
+                const depTime = new Date(departureInput.value);
+                const arrTime = new Date(arrivalInput.value);
+                if (arrTime <= depTime) {
+                    arrivalInput.classList.add('is-invalid');
+                    timeError.style.display = 'block';
+                    isValid = false;
+                }
+            }
+
+            // Airport Validation
+            if (originInput && destInput && originInput.value && destInput.value) {
+                if (originInput.value === destInput.value) {
+                    destInput.classList.add('is-invalid');
+                    destError.style.display = 'block';
+                    isValid = false;
+                }
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+                event.stopPropagation();
+                window.scrollTo(0, 0);
+            }
+        });
+    });
+</script>
 {% endblock %}
