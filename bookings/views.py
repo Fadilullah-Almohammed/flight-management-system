@@ -26,6 +26,7 @@ def my_bookings(request):
 def seat_selection(request):
 
     flight_id = request.GET.get('flight_id')
+    seat_class = request.GET.get('seat_class', 'Economy')
 
 
     if not flight_id:
@@ -56,7 +57,8 @@ def seat_selection(request):
         'flight': flight,
         'total_passengers': total_passengers,
         'taken_seats': taken_seats_list,
-        'row_range': range(1, 21)
+        'row_range': range(1, 21),
+        'seat_class': seat_class
     }
 
     return render(request, 'bookings/seat_selection.html', context)
@@ -64,35 +66,43 @@ def seat_selection(request):
 
 @login_required
 def passenger_details(request):
-    """
-    Display a TicketForm for EACH selected seat.
-    """
     if request.method == 'POST':
-
         flight_id = request.POST.get('flight_id')
         seats_str = request.POST.get('selected_seats')
         
+        # 1. CAPTURE seat_class FROM PREVIOUS FORM
+        seat_class = request.POST.get('seat_class', 'Economy').capitalize()
+
+        
         if not flight_id or not seats_str:
             messages.error(request, "Please select seats first!")
+            return redirect('passenger_dashboard')
             
         flight = get_object_or_404(Flight, flight_number=flight_id)
         seats_list = seats_str.split(',')
         
+        # Calculate Total Price for Display
+        if seat_class == 'Business':
+            ticket_price = flight.business_price
+        elif seat_class == 'First':
+            ticket_price = flight.first_class_price
+        else:
+            ticket_price = flight.economy_price
+            
+        total_price = ticket_price * len(seats_list)
         
         forms_list = []
         for seat in seats_list:
-
-            # prefix=seat ensures the HTML inputs will be unique (e.g. name="1A-passenger_name")
             form = TicketForm(prefix=seat)
-        
             forms_list.append((seat, form))
             
         context = {
             'flight': flight,
             'forms_list': forms_list, 
-            'seats_str': seats_str
+            'seats_str': seats_str,
+            'seat_class': seat_class, # 2. PASS seat_class TO TEMPLATE
+            'total_price': total_price
         }
-        
         return render(request, 'bookings/passenger_details.html', context)
     
     return redirect('passenger_dashboard')
@@ -100,66 +110,69 @@ def passenger_details(request):
 
 @login_required
 def create_booking(request):
-    """
-    Validate ALL forms and save data.
-    """
     if request.method == 'POST':
         flight_id = request.POST.get('flight_id')
         seats_str = request.POST.get('seats_str')
+        
+        # 1. CAPTURE seat_class FROM FORM
+        seat_class = request.POST.get('seat_class', 'Economy')
+        seat_class = seat_class.capitalize()
+        
+        
         seats_list = seats_str.split(',')
-
         flight = get_object_or_404(Flight, flight_number=flight_id)
         
+        # Determine specific price based on class
+        if seat_class == 'Business':
+            ticket_price = flight.business_price
+        elif seat_class == 'First':
+            ticket_price = flight.first_class_price
+        else:
+            ticket_price = flight.economy_price
+
         valid_forms = []
         all_valid = True
-        
         forms_list_for_template = []
         
         for seat in seats_list:
-
             form = TicketForm(request.POST, prefix=seat)
-            
             forms_list_for_template.append((seat, form))
-            
             if form.is_valid():
-
                 valid_forms.append((seat, form))
             else:
                 all_valid = False
         
-
         if not all_valid:
             messages.error(request, "Please correct the errors below.")
-
+            total_price = ticket_price * len(seats_list)
             return render(request, 'bookings/passenger_details.html', {
                 'flight': flight,
                 'forms_list': forms_list_for_template, 
-                'seats_str': seats_str
+                'seats_str': seats_str,
+                'seat_class': seat_class, 
+                'total_price': total_price
             })
-
 
         try:
             profile = request.user.passenger_profile
         except PassengerProfile.DoesNotExist:
             profile = None
 
+        # 2. SAVE Booking with correct seat_class
         booking = Booking.objects.create(
             flight=flight,
             status='Pending',
             number_of_passengers=len(seats_list),
-            seat_class='Economy', 
+            seat_class=seat_class,  # Use variable
             passenger=profile
         )
 
         for seat, form in valid_forms:
-
             ticket = form.save(commit=False) 
-            
             ticket.booking = booking         
-            ticket.seat_number = seat        
-            ticket.seat_class = 'Economy'
-            ticket.price = flight.economy_price
-            
+            ticket.seat_number = seat
+            # (Optional) If Ticket model has price field, save it here
+            # ticket.price = ticket_price 
             ticket.save()                    
             
         messages.success(request, "Booking created! Redirecting to payment...")
@@ -183,8 +196,6 @@ def booking_details(request, booking_id):
 def download_ticket_pdf(request, booking_id):
     booking = get_object_or_404(Booking, booking_id=booking_id, passenger__user=request.user)
     
-    # It just looks for this file name.
-    # As long as you updated the content of this file, the new design will show up.
     template_path = 'bookings/ticket_pdf.html' 
     
     context = {'booking': booking}

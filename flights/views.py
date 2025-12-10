@@ -160,11 +160,11 @@ def search_flight(request):
 @login_required
 def flight_details(request, flight_id):
 
-
     flight = get_object_or_404(Flight, flight_number=flight_id)
 
+    seat_class = request.GET.get('seat_class', 'Economy')
 
-    return render(request, 'flights/flight_details.html', {'flight': flight})
+    return render(request, 'flights/flight_details.html', {'flight': flight, 'seat_class': seat_class})
 
 
 def is_admin(user):

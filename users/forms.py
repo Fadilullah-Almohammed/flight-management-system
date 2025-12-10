@@ -32,7 +32,7 @@ class PassengerCreationForm(UserCreationForm):
     last_name = forms.CharField(required=True)
     date_of_birth = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
 
-    passport = forms.CharField(max_length=7, required=False)
+    passport = forms.CharField(max_length=9, required=False)
     phone_number = forms.CharField(max_length=10, required=False)
     nationality = forms.CharField(max_length=10, required=False)
 
@@ -60,6 +60,14 @@ class PassengerCreationForm(UserCreationForm):
 
         self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Password'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirm Password'})
+
+    def clean_phone_number(self):
+
+        phone = self.cleaned_data.get('phone_number')
+        if phone and not re.match(r'^\d{10}$', phone):
+            raise forms.ValidationError("Phone number must be exactly 10 digits.")
+
+        return phone
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -100,6 +108,14 @@ class PassengerCreationForm(UserCreationForm):
                 raise forms.ValidationError("Sorry. You must be at least 18 years old to be able to register!")
             
         return dob
+    
+    def clean_phone_number(self):
+
+        phone = self.cleaned_data.get('phone_number')
+        if phone and not re.match(r'^\d{10}$', phone):
+            raise forms.ValidationError("Phone number must be exactly 10 digits.")
+        
+        return phone
 
     def save(self, commit=True):
         """
@@ -162,9 +178,8 @@ class UserUpdateForm(forms.ModelForm):
         model = User
         fields = ['first_name', 'last_name', 'email']
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter first name'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter last name'}),
-            # Email is readonly
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
         }
 
@@ -174,24 +189,50 @@ class ProfileUpdateForm(forms.ModelForm):
         fields = ['phone_number', 'date_of_birth', 'nationality', 'passport']
         labels = {
             'nationality': 'National ID / Iqama',
-            'passport': 'Passport Number'
+            'passport': 'Passport Number',
+            'date_of_birth': 'Date of Birth',
+            'phone_number': 'Phone Number'
         }
         widgets = {
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '05XXXXXXXX'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'nationality': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '10-digit ID'}),
-            'passport': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Passport Number'}),
+            'passport': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '9-char alphanumeric'}),
         }
 
-    # --- Validation Logic ---
+    # --- Strict Validation Logic ---
+
+    def clean_phone_number(self):
+            phone = self.cleaned_data.get('phone_number')
+            if phone and not re.match(r'^\d{10}$', phone):
+                raise forms.ValidationError("Phone number must be exactly 10 digits.")
+            return phone
+
     def clean_nationality(self):
         nid = self.cleaned_data.get('nationality')
+        # Check: Must be exactly 10 digits if provided
         if nid and not re.match(r'^\d{10}$', nid):
             raise forms.ValidationError("National ID must be exactly 10 numbers.")
         return nid
 
     def clean_passport(self):
         passport = self.cleaned_data.get('passport')
-        if passport and not re.match(r'^[A-Za-z0-9]{6,15}$', passport):
-            raise forms.ValidationError("Invalid passport format.")
+        if passport and not re.match(r'^[A-Za-z0-9]{9}$', passport):
+            raise forms.ValidationError("Passport must be exactly 9 alphanumeric characters.")
         return passport
+
+    def clean_date_of_birth(self):
+        dob = self.cleaned_data.get('date_of_birth')
+        if dob:
+            # Check 1: Cannot be in the future
+            if dob > date.today():
+                raise forms.ValidationError("Date of birth cannot be in the future.")
+            
+            # Check 2: Must be at least 18 years old
+            today = date.today()
+            cutoff_date = today.replace(year=today.year - 18)
+            if dob > cutoff_date:
+                raise forms.ValidationError("You must be at least 18 years old.")
+            
+                
+        return dob

@@ -20,35 +20,39 @@
                     <h4 class="fw-bold">{{ user.first_name }} {{ user.last_name }}</h4>
                     <p class="text-muted">{{ user.email }}</p>
                     
+                    <div class="badge bg-light text-dark mb-3 border">
+                        {% if user.is_staff %} Administrator {% else %} Passenger {% endif %}
+                    </div>
+                    
                     <hr class="my-4">
                     
                     <div class="text-start">
                         <div class="mb-3">
                             <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Member Since</small>
-                            <div class="fw-bold">{{ user.date_joined|date:"F Y" }}</div>
+                            <div class="fw-bold">{{ user.date_joined|date:"F d, Y" }}</div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">National ID</small>
-                            <div class="fw-bold">
-                                {% if user.passenger_profile.nationality %}
-                                    {{ user.passenger_profile.nationality }}
-                                {% else %}
-                                    <span class="text-muted small">--</span>
-                                {% endif %}
+
+                        {% if user.is_staff %}
+                            <div class="mb-3">
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Hire Date</small>
+                                <div class="fw-bold text-primary">
+                                    {{ profile.hire_date|date:"F d, Y" }}
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Passport</small>
-                            <div class="fw-bold">
-                                {% if user.passenger_profile.passport %}
-                                    {{ user.passenger_profile.passport }}
-                                {% else %}
-                                    <span class="text-muted small">--</span>
-                                {% endif %}
+                        {% else %}
+                            <div class="mb-3">
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">National ID</small>
+                                <div class="fw-bold">
+                                    {{ profile.nationality|default:"--" }}
+                                </div>
                             </div>
-                        </div>
+                            <div>
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Passport</small>
+                                <div class="fw-bold">
+                                    {{ profile.passport|default:"--" }}
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
 
                 </div>
@@ -58,55 +62,64 @@
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-header bg-white border-0 pt-4 px-4">
-                    <h5 class="mb-0 text-primary fw-bold">Update Profile</h5>
+                    <h5 class="mb-0 text-primary fw-bold">Update Profile Details</h5>
                 </div>
                 
                 <div class="card-body p-4">
                     <form method="POST">
                         {% csrf_token %}
                         
-                        <h6 class="text-muted text-uppercase small fw-bold mb-3">Account Information</h6>
+                        <h6 class="text-uppercase text-muted small fw-bold mb-3">Account Information</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label small text-muted">First Name</label>
+                                <label class="form-label small fw-bold">First Name</label>
                                 {{ u_form.first_name }}
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small text-muted">Last Name</label>
+                                <label class="form-label small fw-bold">Last Name</label>
                                 {{ u_form.last_name }}
                             </div>
                             <div class="col-12">
-                                <label class="form-label small text-muted">Email (Read-only)</label>
+                                <label class="form-label small fw-bold">Email Address</label>
                                 {{ u_form.email }}
                             </div>
                         </div>
 
-                        <h6 class="text-muted text-uppercase small fw-bold mb-3 border-top pt-4">Personal Details</h6>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted">Phone Number</label>
-                                {{ p_form.phone_number }}
-                                <div class="text-danger small">{{ p_form.phone_number.errors }}</div>
+                        {% if not user.is_staff and p_form %}
+                            <hr class="opacity-25 my-4">
+                            <h6 class="text-uppercase text-muted small fw-bold mb-3">Personal Details</h6>
+                            
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Phone Number</label>
+                                    {{ p_form.phone_number }}
+                                    <div class="text-danger small">{{ p_form.phone_number.errors }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Date of Birth</label>
+                                    {{ p_form.date_of_birth }}
+                                    <div class="text-danger small">{{ p_form.date_of_birth.errors }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">National ID / Iqama</label>
+                                    {{ p_form.nationality }}
+                                    <div class="text-danger small">{{ p_form.nationality.errors }}</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Passport Number</label>
+                                    {{ p_form.passport }}
+                                    <div class="text-danger small">{{ p_form.passport.errors }}</div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted">Date of Birth</label>
-                                {{ p_form.date_of_birth }}
-                                <div class="text-danger small">{{ p_form.date_of_birth.errors }}</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted">National ID / Iqama</label>
-                                {{ p_form.nationality }}
-                                <div class="text-danger small">{{ p_form.nationality.errors }}</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small text-muted">Passport Number</label>
-                                {{ p_form.passport }}
-                                <div class="text-danger small">{{ p_form.passport.errors }}</div>
-                            </div>
-                        </div>
+                        {% endif %}
 
                         <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a href="{% url 'passenger_dashboard' %}" class="btn btn-light border">Cancel</a>
+                            {% if user.is_staff %}
+                                <a href="{% url 'admin_dashboard' %}" class="btn btn-light border px-4">Back to Dashboard</a>
+                            {% else %}
+                                <a href="{% url 'passenger_dashboard' %}" class="btn btn-light border px-4">Cancel</a>
+                            {% endif %}
+                            
                             <button type="submit" class="btn btn-primary px-4">Save Changes</button>
                         </div>
 

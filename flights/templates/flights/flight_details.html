@@ -36,9 +36,19 @@
                                 {{ flight.arrival_airport.city }} ({{ flight.arrival_airport.airport_code }})
                             </p>
                         </div>
+                        
                         <div class="text-end">
-                            <h3 class="mb-0 text-primary">{{ flight.economy_price }} SAR</h3>
-                            <span class="text-muted">per passenger (Economy)</span>
+                            <h3 class="mb-0 text-primary">
+                                {% if seat_class|lower == 'Business' %}
+                                    {{ flight.business_price }}
+                                {% elif seat_class|lower == 'First' %}
+                                    {{ flight.first_class_price }}
+                                {% else %}
+                                    {{ flight.economy_price }}
+                                {% endif %}
+                                SAR
+                            </h3>
+                            <span class="text-muted">per passenger ({{ seat_class|title }})</span>
                         </div>
                     </div>
 
@@ -64,6 +74,8 @@
 
                     <form action="{% url 'seat_selection' %}" method="get">
                         <input type="hidden" name="flight_id" value="{{ flight.flight_number }}">
+                        
+                        <input type="hidden" name="seat_class" value="{{ seat_class }}">
                         
                         <h4 class="mb-3 text-center">Select Passengers</h4>
                         <div class="row justify-content-center">

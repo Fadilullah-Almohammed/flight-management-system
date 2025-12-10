@@ -11,7 +11,6 @@
         background-color: #ffffff;
     }
 
-    /* Seat Map Grid: 3 seats | Aisle | 3 seats */
     .seat-map {
         display: grid;
         grid-template-columns: repeat(3, 1fr) 40px repeat(3, 1fr);
@@ -122,6 +121,8 @@
                                 <input type="hidden" name="flight_id" value="{{ flight.flight_number }}">
                                 <input type="hidden" name="selected_seats" id="seatsInput">
                                 
+                                <input type="hidden" name="seat_class" value="{{ seat_class }}">
+                                
                                 <div class="d-grid">
                                     <button type="button" class="btn btn-primary btn-lg disabled" id="confirmButton">
                                         Confirm Selection
@@ -153,11 +154,10 @@
         const selectedListEl = document.getElementById("selectedSeatsList");
         const selectedCountEl = document.getElementById("selectedCount");
         const seatsInput = document.getElementById("seatsInput");
-        const alertContainer = document.getElementById("alert-container"); // (FIX 2) Get container
+        const alertContainer = document.getElementById("alert-container");
         
         let selectedSeats = [];
 
-        // (FIX 3) Helper Function to Show Bootstrap Alerts
         function showAlert(message, type) {
             const wrapper = document.createElement('div');
             wrapper.innerHTML = [
@@ -167,14 +167,12 @@
                 '</div>'
             ].join('');
             
-            alertContainer.innerHTML = ''; // Clear previous alerts
+            alertContainer.innerHTML = '';
             alertContainer.append(wrapper);
             
-            // Scroll to top to make sure user sees it
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Mark Taken Seats
         takenSeats.forEach(seatId => {
             const seatEl = document.getElementById(seatId);
             if (seatEl) {
@@ -184,7 +182,7 @@
             }
         });
 
-        // Click Handler
+
         seats.forEach(seat => {
             seat.addEventListener("click", function() {
                 if (this.classList.contains("taken")) return;
@@ -195,15 +193,14 @@
                     // Deselect
                     this.classList.remove("selected");
                     selectedSeats = selectedSeats.filter(s => s !== seatId);
-                    alertContainer.innerHTML = ''; // Clear warnings on deselect
+                    alertContainer.innerHTML = ''; 
                 } else {
                     // Select
                     if (selectedSeats.length < passengersRequired) {
                         this.classList.add("selected");
                         selectedSeats.push(seatId);
-                        alertContainer.innerHTML = ''; // Clear warnings on valid select
+                        alertContainer.innerHTML = ''; 
                     } else {
-                        // (FIX 4) Use showAlert instead of alert()
                         showAlert(`You can only select ${passengersRequired} seats. Please deselect one first.`, 'warning');
                     }
                 }
@@ -227,9 +224,9 @@
 
         confirmBtn.addEventListener("click", function() {
             if (!this.classList.contains("disabled")) {
-                // (FIX 5) Show success alert before submitting
+
                 showAlert("Seats confirmed! Proceeding to payment...", "success");
-                // Uncomment this when payment page is ready:
+
                 document.getElementById("seatForm").submit();
             }
         });

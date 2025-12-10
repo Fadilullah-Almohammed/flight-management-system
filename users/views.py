@@ -168,23 +168,53 @@ def admin_site_settings(request):
 
 @login_required
 def profile(request):
-    if request.method == 'POST':
+    user = request.user
 
-        u_form = UserUpdateForm(request.POST, instance=request.user)
-        p_form = ProfileUpdateForm(request.POST, instance=request.user.passenger_profile)
+    # --- LOGIC FOR ADMINS ---
+    if user.is_staff:
+        # Admins generally don't register via the form, so ensure profile exists gracefully
+        admin_profile, created = Admin.objects.get_or_create(user=user)
+        
+        if request.method == 'POST':
+            # Admins only update basic User info (Name/Email)
+            # Hire Date is auto-generated and usually read-only
+            u_form = UserUpdateForm(request.POST, instance=user)
+            
+            if u_form.is_valid():
+                u_form.save()
+                messages.success(request, 'Admin profile updated successfully!')
+                return redirect('profile')
+        else:
+            u_form = UserUpdateForm(instance=user)
+        
+        # Admins have no "ProfileUpdateForm" for passport/etc.
+        p_form = None 
+        profile_data = admin_profile # To display hire date in template
 
-        if u_form.is_valid() and p_form.is_valid():
-            u_form.save()
-            p_form.save()
-            messages.success(request, 'Your profile has been updated!')
-            return redirect('profile')
+    # --- LOGIC FOR PASSENGERS ---
     else:
+        # Ensure Passenger profile exists
+        passenger_profile, created = PassengerProfile.objects.get_or_create(user=user)
 
-        u_form = UserUpdateForm(instance=request.user)
-        p_form = ProfileUpdateForm(instance=request.user.passenger_profile)
+        if request.method == 'POST':
+            u_form = UserUpdateForm(request.POST, instance=user)
+            p_form = ProfileUpdateForm(request.POST, instance=passenger_profile)
+
+            if u_form.is_valid() and p_form.is_valid():
+                u_form.save()
+                p_form.save()
+                messages.success(request, 'Passenger profile updated successfully!')
+                return redirect('profile')
+        else:
+            u_form = UserUpdateForm(instance=user)
+            p_form = ProfileUpdateForm(instance=passenger_profile)
+            
+        profile_data = passenger_profile
 
     context = {
         'u_form': u_form,
-        'p_form': p_form
+        'p_form': p_form,       # Will be None for Admins
+        'profile': profile_data # Contains either Admin or Passenger object
     }
+
     return render(request, 'users/profile.html', context)
