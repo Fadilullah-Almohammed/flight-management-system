@@ -6,8 +6,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .forms import *
 from .models import PassengerProfile, Admin
-from flights.models import Airport
+from flights.models import Airport, Flight
 from django.utils import timezone
+from datetime import timedelta
 from bookings.models import Booking
 
 
@@ -109,9 +110,38 @@ def admin_dashboard(request):
         messages.error(request, 'Sorry. You are not authorized to view that page!')
         return redirect('passenger_dashboard')
 
-    return render(request, 'users/admin_dashboard.html')
+
+    duration = request.GET.get('duration', 'year')
+    now = timezone.now()
 
 
+    if duration == 'day':
+        start_date = now - timedelta(days=1)
+    elif duration == 'week':
+        start_date = now - timedelta(weeks=1)
+    elif duration == 'month':
+        start_date = now - timedelta(days=30)
+    elif duration == '3month':
+        start_date = now - timedelta(days=90)
+    else:
+        start_date = now - timedelta(days=365)
+
+
+
+    total_flights = Flight.objects.filter(departure_datetime__gte=start_date).count()
+    total_bookings = Booking.objects.filter(booking_date__gte=start_date).count()
+
+    cancellations = Booking.objects.filter(status='Cancelled', booking_date__gte=start_date).count()
+
+
+    context = {
+        'total_flights': total_flights,
+        'total_bookings': total_bookings,
+        'cancellations': cancellations,
+        'selected_duration': duration
+    }
+
+    return render(request, 'users/admin_dashboard.html', context)
 
 @login_required
 def view_profile(request):
@@ -144,7 +174,6 @@ def view_profile(request):
 
     return render(request, 'users/profile.html', context)
 
-
 @login_required
 def view_booked_flights(request):
     passenger = request.user.passenger_profile
@@ -168,16 +197,15 @@ def admin_site_settings(request):
 
 @login_required
 def profile(request):
+
     user = request.user
 
-    # --- LOGIC FOR ADMINS ---
     if user.is_staff:
-        # Admins generally don't register via the form, so ensure profile exists gracefully
+
         admin_profile, created = Admin.objects.get_or_create(user=user)
         
         if request.method == 'POST':
-            # Admins only update basic User info (Name/Email)
-            # Hire Date is auto-generated and usually read-only
+
             u_form = UserUpdateForm(request.POST, instance=user)
             
             if u_form.is_valid():
@@ -187,13 +215,13 @@ def profile(request):
         else:
             u_form = UserUpdateForm(instance=user)
         
-        # Admins have no "ProfileUpdateForm" for passport/etc.
         p_form = None 
         profile_data = admin_profile # To display hire date in template
 
-    # --- LOGIC FOR PASSENGERS ---
+
+    # passenger logic ------
     else:
-        # Ensure Passenger profile exists
+
         passenger_profile, created = PassengerProfile.objects.get_or_create(user=user)
 
         if request.method == 'POST':
@@ -213,8 +241,8 @@ def profile(request):
 
     context = {
         'u_form': u_form,
-        'p_form': p_form,       # Will be None for Admins
-        'profile': profile_data # Contains either Admin or Passenger object
+        'p_form': p_form,       
+        'profile': profile_data 
     }
 
     return render(request, 'users/profile.html', context)

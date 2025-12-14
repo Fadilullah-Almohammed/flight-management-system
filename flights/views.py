@@ -1,9 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+from django.template.loader import get_template
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
+from django.db.models import Q
+from django.db.models.functions import Length
 from .forms import *
 from .models import *
 from datetime import datetime
+from bookings.models import Ticket
+from xhtml2pdf import pisa
 
 
 # Create your views here.
@@ -42,9 +48,28 @@ def add_new_flight(request):
 
 @login_required
 def view_flights(request):
-        
+
+    search_query = request.GET.get('search', '')
+    
+
     flights = Flight.objects.all().order_by('departure_datetime')
-    return render(request, 'flights/view_flights.html', {'flights': flights})
+
+
+    if search_query:
+        flights = flights.filter(
+            Q(flight_number__icontains=search_query) |
+            Q(departure_airport__airport_code__icontains=search_query) |
+            Q(departure_airport__city__icontains=search_query) |
+            Q(arrival_airport__airport_code__icontains=search_query) |
+            Q(arrival_airport__city__icontains=search_query) |
+            Q(aircraft__model__icontains=search_query)
+        )
+
+    context = {
+        'flights': flights,
+        'search_query': search_query  
+    }
+    return render(request, 'flights/view_flights.html', context)
 
 @login_required
 def delete_flight(request, flight_id):
@@ -61,11 +86,6 @@ def delete_flight(request, flight_id):
         messages.success(request, 'Flight deleted successfully')
 
     return redirect('view_flights')
-
-@login_required
-def flight_management(request):
-
-    return render(request, 'flights/flights_management.html')
 
 
 @login_required
@@ -196,3 +216,220 @@ def edit_flight(request, flight_id):
         form = FlightForm(instance=flight)
     
     return render(request, 'flights/edit_flight.html', {'form': form, 'flight': flight})
+
+@login_required
+def flight_manifest(request, flight_id):
+    
+    if not request.user.is_staff:
+        messages.error(request, 'Access denied.')
+        return redirect('passenger_dashboard')
+    
+    flight = get_object_or_404(Flight, flight_number=flight_id)
+
+    search_query = request.GET.get('search', '')
+    
+
+    tickets = Ticket.objects.filter(booking__flight=flight).exclude(booking__status='Cancelled').select_related('booking')
+
+
+    if search_query:
+        tickets = tickets.filter(
+            Q(passenger_name__icontains=search_query) |
+            Q(passport__icontains=search_query) |
+            Q(booking__booking_id__icontains=search_query) |
+            Q(booking__seat_class__icontains=search_query)
+        )
+
+
+    sort_param = request.GET.get('sort', 'seat')
+
+    if sort_param == 'name':
+        tickets = tickets.order_by('passenger_name')
+    else:
+
+        tickets = tickets.annotate(seat_len=Length('seat_number')).order_by('seat_len', 'seat_number')
+
+    total_seats = flight.aircraft.economy_class + flight.aircraft.business_class + flight.aircraft.first_class
+    occupied_seats = tickets.count()
+
+    context = {
+        'flight': flight,
+        'tickets': tickets,
+        'occupied_seats': occupied_seats,
+        'total_seats': total_seats,
+        'search_query': search_query,
+        'sort_param': sort_param
+    }
+
+    return render(request, 'flights/flight_manifest.html', context)
+
+
+@login_required
+def remove_passenger(request, ticket_id):
+
+    if not request.user.is_staff:
+        messages.error(request, 'Access denied.')
+        return redirect('passenger_dashboard')
+    
+    ticket = get_object_or_404(Ticket, ticket_id=ticket_id)
+    flight_id = ticket.booking.flight.flight_number
+
+    if request.method == 'POST':
+        booking = ticket.booking
+
+        if booking.tickets.count() <= 1:
+            booking.status = 'Cancelled'
+            booking.save()
+            ticket.delete()
+        else:
+            ticket.delete()
+
+        messages.success(request, f"Passenger {ticket.passenger_name} removed successfully.")
+    
+    return redirect('flight_manifest', flight_id=flight_id)
+
+
+def render_to_pdf(template_src, context_dict={}):
+    template = get_template(template_src)
+    html  = template.render(context_dict)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="flight_report.pdf"'
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('We had some errors <pre>' + html + '</pre>')
+    return response
+
+@login_required
+def admin_view_reports(request):
+    if not request.user.is_staff:
+        messages.error(request, "Access denied.")
+        return redirect('passenger_dashboard')
+
+    # Security Check (still useful for the table column)
+    show_financials = request.user.is_superuser 
+
+    flights = Flight.objects.all().select_related('aircraft', 'departure_airport', 'arrival_airport')
+    all_valid_tickets = Ticket.objects.exclude(booking__status='Cancelled').select_related('booking', 'booking__flight')
+
+    total_tickets_sold = all_valid_tickets.count()
+    total_flights_count = flights.count()
+    
+    flight_reports = []
+
+    for flight in flights:
+        flight_tickets = all_valid_tickets.filter(booking__flight=flight)
+        
+        # Operational Stats
+        total_sold = flight_tickets.count()
+        total_capacity = flight.aircraft.economy_class + flight.aircraft.business_class + flight.aircraft.first_class
+        
+        occupancy_rate = 0
+        if total_capacity > 0:
+            occupancy_rate = round((total_sold / total_capacity) * 100, 1)
+
+        # Financial Stats (Per flight only)
+        flight_revenue = 0
+        if show_financials:
+            eco_sold = flight_tickets.filter(booking__seat_class='Economy').count()
+            bus_sold = flight_tickets.filter(booking__seat_class='Business').count()
+            first_sold = flight_tickets.filter(booking__seat_class='First').count()
+            
+            flight_revenue = (eco_sold * flight.economy_price) + \
+                             (bus_sold * flight.business_price) + \
+                             (first_sold * flight.first_class_price)
+
+        flight_reports.append({
+            'flight_obj': flight,
+            'revenue': flight_revenue,
+            'sold': total_sold,
+            'capacity': total_capacity,
+            'occupancy': occupancy_rate,
+            'status': flight.status
+        })
+
+    if show_financials:
+        flight_reports.sort(key=lambda x: x['revenue'], reverse=True)
+    else:
+        flight_reports.sort(key=lambda x: x['sold'], reverse=True)
+
+    context = {
+        'total_tickets': total_tickets_sold,
+        'total_flights': total_flights_count,
+        'flight_reports': flight_reports,
+        'today': datetime.now(),
+        'show_financials': show_financials 
+    }
+
+    return render(request, 'flights/reports.html', context)
+
+@login_required
+def generate_report_pdf(request):
+    if not request.user.is_staff:
+        messages.error(request, "Access denied.")
+        return redirect('passenger_dashboard')
+
+    report_type = request.GET.get('report_type', 'general')
+    
+    if report_type == 'financial' and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to export financial reports.")
+        return redirect('admin_view_reports')
+
+    flights = Flight.objects.all().select_related('aircraft', 'departure_airport', 'arrival_airport').order_by('departure_datetime')
+    all_valid_tickets = Ticket.objects.exclude(booking__status='Cancelled').select_related('booking', 'booking__flight')
+    
+    flight_data = []
+    total_tickets = all_valid_tickets.count()
+    show_financials = request.user.is_superuser
+
+    for flight in flights:
+        tickets = all_valid_tickets.filter(booking__flight=flight)
+        
+        eco = tickets.filter(booking__seat_class='Economy').count()
+        bus = tickets.filter(booking__seat_class='Business').count()
+        first = tickets.filter(booking__seat_class='First').count()
+        
+        revenue = (eco * flight.economy_price) + (bus * flight.business_price) + (first * flight.first_class_price)
+        
+        total_sold = eco + bus + first
+        capacity = flight.aircraft.economy_class + flight.aircraft.business_class + flight.aircraft.first_class
+        occupancy = round((total_sold / capacity) * 100, 1) if capacity > 0 else 0
+
+        # Build data row
+        if report_type == 'financial':
+            flight_data.append({
+                'flight': flight,
+                'revenue': revenue,
+                'eco_sold': eco,
+                'bus_sold': bus,
+                'first_sold': first
+            })
+        elif report_type == 'occupancy':
+            flight_data.append({
+                'flight': flight,
+                'capacity': capacity,
+                'sold': total_sold,
+                'occupancy': occupancy
+            })
+        else: # general
+            data_row = {
+                'flight': flight,
+                'sold': total_sold,
+                'occupancy': occupancy,
+                'status': flight.status
+            }
+            if show_financials:
+                data_row['revenue'] = revenue
+            
+            flight_data.append(data_row)
+
+    context = {
+        'report_type': report_type,
+        'generated_at': datetime.now(),
+        'flight_data': flight_data,
+        'total_flights': flights.count(),
+        'total_tickets': total_tickets,
+        'user': request.user,
+        'show_financials': show_financials
+    }
+
+    return render_to_pdf('flights/report_pdf.html', context)

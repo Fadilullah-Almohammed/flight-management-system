@@ -18,6 +18,14 @@
         font-weight: 600;
         font-size: 0.9rem;
     }
+    /* Search Bar Styling */
+    .search-card {
+        border: 0;
+        border-radius: 1rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        background-color: #ffffff;
+        margin-bottom: 1.5rem;
+    }
 </style>
 {% endblock %}
 
@@ -32,6 +40,31 @@
         <a href="{% url 'add_new_flight' %}" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Add New Flight
         </a>
+    </div>
+
+    <div class="card search-card">
+        <div class="card-body p-2">
+            <form method="GET" action="{% url 'view_flights' %}" class="row g-2 align-items-center">
+                <div class="col">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-0 text-muted ps-3">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control border-0 shadow-none" 
+                               placeholder="Search by Flight No, Airport Code, City, or Aircraft..." 
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="col-auto pe-2">
+                    <button type="submit" class="btn btn-primary px-4 rounded-pill">Search</button>
+                    {% if search_query %}
+                        <a href="{% url 'view_flights' %}" class="btn btn-light rounded-pill ms-1" title="Clear Search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="card table-card">
@@ -92,7 +125,11 @@
                             </td>
 
                             <td class="pe-4 text-end">
+                                
                                 <div class="btn-group">
+                                    <a href="{% url 'flight_manifest' flight.flight_number %}" class="btn btn-sm btn-outline-info" title="View Manifest">
+                                        <i class="bi bi-people-fill"></i>
+                                    </a>
                                     <a href="{% url 'edit_flight' flight.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
@@ -113,10 +150,16 @@
                         <tr>
                             <td colspan="7" class="text-center py-5">
                                 <div class="text-muted">
-                                    <i class="bi bi-calendar-x display-4 mb-3 d-block"></i>
-                                    <h5>No flights found</h5>
-                                    <p class="mb-3">Get started by adding a new flight schedule.</p>
-                                    <a href="{% url 'add_new_flight' %}" class="btn btn-outline-primary btn-sm">Add Flight</a>
+                                    <i class="bi bi-search display-4 mb-3 d-block opacity-25"></i>
+                                    {% if search_query %}
+                                        <h5>No flights match your search</h5>
+                                        <p class="mb-3">Try adjusting your search terms.</p>
+                                        <a href="{% url 'view_flights' %}" class="btn btn-outline-primary btn-sm">Clear Search</a>
+                                    {% else %}
+                                        <h5>No flights found</h5>
+                                        <p class="mb-3">Get started by adding a new flight schedule.</p>
+                                        <a href="{% url 'add_new_flight' %}" class="btn btn-outline-primary btn-sm">Add Flight</a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -155,18 +198,16 @@
 
 {% block extra_js %}
 <script>
-    // This script handles passing data from the button to the modal
+
     var deleteModal = document.getElementById('deleteModal');
     
     deleteModal.addEventListener('show.bs.modal', function (event) {
-        // Button that triggered the modal
+
         var button = event.relatedTarget;
         
-        // Extract info from data-* attributes
         var flightNumber = button.getAttribute('data-flight-number');
         var deleteUrl = button.getAttribute('data-delete-url');
         
-        // Update the modal's content
         var modalTitle = deleteModal.querySelector('#modalFlightNumber');
         var deleteForm = deleteModal.querySelector('#deleteForm');
         
