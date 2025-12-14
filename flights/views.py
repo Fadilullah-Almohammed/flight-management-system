@@ -90,90 +90,78 @@ def delete_flight(request, flight_id):
 
 @login_required
 def search_flight(request):
-
     departure_code = request.GET.get('origin')
     destination_code = request.GET.get('destination')
     date_from_str = request.GET.get('date_from')
     date_to_str = request.GET.get('date_to')
-
-    cabin_class = request.GET.get('cabin_class', 'economy')
+    cabin_class = request.GET.get('cabin_class', 'economy').lower()
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
 
-
     flights = []
-
     departure_city = 'Unknown'
     destination_city = 'Unknown'
 
-
     if departure_code and destination_code and date_from_str and date_to_str:
-
         try:
             search_date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
             search_date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
-
+            
+            # Base query: Route and Date
             flights = Flight.objects.filter(
                 departure_airport__airport_code=departure_code,
                 arrival_airport__airport_code=destination_code,
                 departure_datetime__date__range=[search_date_from, search_date_to]
             )
 
+            # --- Capacity Check: Hide flights if class capacity is 0 ---
+            if cabin_class == 'first':
+                flights = flights.filter(aircraft__first_class__gt=0)
+            elif cabin_class == 'business':
+                flights = flights.filter(aircraft__business_class__gt=0)
+            else:
+                flights = flights.filter(aircraft__economy_class__gt=0)
 
+            # --- Price Filter ---
             if min_price:
-                if cabin_class == 'business':
-                    flights = flights.filter(business_price__gte = min_price)
-
-                elif cabin_class == 'first':
-                    flights = flights.filter(first_class_price__gte = min_price)
-
-                else:
-                    flights = flights.filter(economy_price__gte=min_price)
-
+                if cabin_class == 'business': flights = flights.filter(business_price__gte=min_price)
+                elif cabin_class == 'first': flights = flights.filter(first_class_price__gte=min_price)
+                else: flights = flights.filter(economy_price__gte=min_price)
+            
             if max_price:
-                if cabin_class == 'business':
-                    flights = flights.filter(business_price__lte = max_price)
-
-                elif cabin_class == 'first':
-                    flights = flights.filter(first_class_price__lte = max_price)
-
-                else:
-                    flights = flights.filter(economy_price__lte=max_price)
-
-
+                if cabin_class == 'business': flights = flights.filter(business_price__lte=max_price)
+                elif cabin_class == 'first': flights = flights.filter(first_class_price__lte=max_price)
+                else: flights = flights.filter(economy_price__lte=max_price)
+            
             flights = flights.order_by('departure_datetime')
-
+            
+            # Fetch city names for display
             if flights.exists():
                 departure_city = flights[0].departure_airport.city
                 destination_city = flights[0].arrival_airport.city
             else:
-
                 try:
                     departure_city = Airport.objects.get(airport_code=departure_code).city
                     destination_city = Airport.objects.get(airport_code=destination_code).city
-                
-                except Airport.DoesNotExist:
+                except Airport.DoesNotExist: 
                     pass
 
-        except ValueError:
+        except ValueError: 
             pass
 
-
     context = {
-        'flights': flights,
-        'departure_code': departure_code,
+        'flights': flights, 
+        'departure_code': departure_code, 
         'destination_code': destination_code,
-        'cabin_class': cabin_class,
-        'min_price': min_price,
+        'cabin_class': cabin_class, 
+        'min_price': min_price, 
         'max_price': max_price,
-        'departure_city': departure_city,
+        'departure_city': departure_city, 
         'destination_city': destination_city,
-        'date_from': date_from_str,
-        'date_to': date_to_str,
+        'date_from': date_from_str, 
+        'date_to': date_to_str, 
         'result_count': len(flights)
     }
-
-
     return render(request, 'flights/search_flight.html', context)
 
 

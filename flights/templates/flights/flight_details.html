@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             
@@ -72,10 +72,7 @@
                     
                     <hr class="my-4">
 
-                    <form action="{% url 'seat_selection' %}" method="get">
-                        <input type="hidden" name="flight_id" value="{{ flight.flight_number }}">
-                        
-                        <input type="hidden" name="seat_class" value="{{ seat_class }}">
+                    <form action="{% url 'seat_selection' flight.flight_number seat_class %}" method="get">
                         
                         <h4 class="mb-3 text-center">Select Passengers</h4>
                         <div class="row justify-content-center">

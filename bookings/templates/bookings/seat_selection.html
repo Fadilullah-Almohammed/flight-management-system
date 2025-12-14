@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <style>
+    /* ... (Keep your existing CSS exactly as is) ... */
     .seat-card {
         border: 0;
         border-radius: 1rem;
@@ -16,7 +17,7 @@
         grid-template-columns: repeat(3, 1fr) 40px repeat(3, 1fr);
         gap: 10px;
         max-width: 500px;
-        margin: 2rem auto;
+        margin: 0 auto;
         background-color: #f8f9fa;
         padding: 30px 20px;
         border-radius: 15px;
@@ -59,9 +60,39 @@
         opacity: 0.6;
         pointer-events: none;
     }
+    
+    .seat.wrong-class {
+        opacity: 0.3;
+        background-color: #e9ecef;
+        pointer-events: none;
+        border-color: transparent;
+    }
 
     .aisle-spacer { grid-column: auto; }
     .seat-label { text-align: center; font-size: 0.8rem; font-weight: bold; color: #6c757d; margin-bottom: 5px; }
+    
+    .section-header {
+        grid-column: 1 / -1;
+        text-align: center;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #adb5bd;
+        margin: 15px 0 5px 0;
+        letter-spacing: 1px;
+        position: relative;
+    }
+    .section-header::before, .section-header::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 35%;
+        height: 1px;
+        background-color: #dee2e6;
+    }
+    .section-header::before { left: 0; }
+    .section-header::after { right: 0; }
+
 </style>
 {% endblock %}
 
@@ -84,8 +115,11 @@
                     <div class="text-center mb-4">
                         <h2 class="fw-bold">Select Your Seats</h2>
                         <p class="text-muted mb-1">Flight {{ flight.flight_number }}</p>
-                        <div class="badge bg-info text-dark fs-6 px-3 py-2">
-                            Select {{ total_passengers }} Seat(s)
+                        <div class="badge bg-primary fs-6 px-3 py-2 mb-2">
+                            You are booking: {{ seat_class|title }} Class
+                        </div>
+                        <div>
+                             Select <strong>{{ total_passengers }}</strong> Seat(s)
                         </div>
                     </div>
                     
@@ -100,15 +134,45 @@
                         <div class="aisle-spacer"></div>
                         <div class="seat-label">D</div><div class="seat-label">E</div><div class="seat-label">F</div>
 
-                        {% for row in row_range %}
-                            <div class="seat available" id="{{ row }}A" data-seat="{{ row }}A">{{ row }}A</div>
-                            <div class="seat available" id="{{ row }}B" data-seat="{{ row }}B">{{ row }}B</div>
-                            <div class="seat available" id="{{ row }}C" data-seat="{{ row }}C">{{ row }}C</div>
-                            <div class="aisle-spacer"></div>
-                            <div class="seat available" id="{{ row }}D" data-seat="{{ row }}D">{{ row }}D</div>
-                            <div class="seat available" id="{{ row }}E" data-seat="{{ row }}E">{{ row }}E</div>
-                            <div class="seat available" id="{{ row }}F" data-seat="{{ row }}F">{{ row }}F</div>
-                        {% endfor %}
+                        {% if first_range %}
+                            <div class="section-header">First Class</div>
+                            {% for row in first_range %}
+                                <div class="seat available {% if seat_class|lower != 'first' %}wrong-class{% endif %}" id="{{ row }}A" data-seat="{{ row }}A">{{ row }}A</div>
+                                <div class="seat available {% if seat_class|lower != 'first' %}wrong-class{% endif %}" id="{{ row }}B" data-seat="{{ row }}B">{{ row }}B</div>
+                                <div class="seat available {% if seat_class|lower != 'first' %}wrong-class{% endif %}" id="{{ row }}C" data-seat="{{ row }}C">{{ row }}C</div>
+                                <div class="aisle-spacer"></div>
+                                <div class="seat available {% if seat_class|lower != 'first' %}wrong-class{% endif %}" id="{{ row }}D" data-seat="{{ row }}D">{{ row }}D</div>
+                                <div class="seat available {% if seat_class|lower != 'first' %}wrong-class{% endif %}" id="{{ row }}E" data-seat="{{ row }}E">{{ row }}E</div>
+                                <div class="seat available {% if seat_class|lower != 'first' %}wrong-class{% endif %}" id="{{ row }}F" data-seat="{{ row }}F">{{ row }}F</div>
+                            {% endfor %}
+                        {% endif %}
+
+                        {% if bus_range %}
+                            <div class="section-header">Business Class</div>
+                            {% for row in bus_range %}
+                                <div class="seat available {% if seat_class|lower != 'business' %}wrong-class{% endif %}" id="{{ row }}A" data-seat="{{ row }}A">{{ row }}A</div>
+                                <div class="seat available {% if seat_class|lower != 'business' %}wrong-class{% endif %}" id="{{ row }}B" data-seat="{{ row }}B">{{ row }}B</div>
+                                <div class="seat available {% if seat_class|lower != 'business' %}wrong-class{% endif %}" id="{{ row }}C" data-seat="{{ row }}C">{{ row }}C</div>
+                                <div class="aisle-spacer"></div>
+                                <div class="seat available {% if seat_class|lower != 'business' %}wrong-class{% endif %}" id="{{ row }}D" data-seat="{{ row }}D">{{ row }}D</div>
+                                <div class="seat available {% if seat_class|lower != 'business' %}wrong-class{% endif %}" id="{{ row }}E" data-seat="{{ row }}E">{{ row }}E</div>
+                                <div class="seat available {% if seat_class|lower != 'business' %}wrong-class{% endif %}" id="{{ row }}F" data-seat="{{ row }}F">{{ row }}F</div>
+                            {% endfor %}
+                        {% endif %}
+
+                        {% if eco_range %}
+                            <div class="section-header">Economy Class</div>
+                            {% for row in eco_range %}
+                                <div class="seat available {% if seat_class|lower != 'economy' %}wrong-class{% endif %}" id="{{ row }}A" data-seat="{{ row }}A">{{ row }}A</div>
+                                <div class="seat available {% if seat_class|lower != 'economy' %}wrong-class{% endif %}" id="{{ row }}B" data-seat="{{ row }}B">{{ row }}B</div>
+                                <div class="seat available {% if seat_class|lower != 'economy' %}wrong-class{% endif %}" id="{{ row }}C" data-seat="{{ row }}C">{{ row }}C</div>
+                                <div class="aisle-spacer"></div>
+                                <div class="seat available {% if seat_class|lower != 'economy' %}wrong-class{% endif %}" id="{{ row }}D" data-seat="{{ row }}D">{{ row }}D</div>
+                                <div class="seat available {% if seat_class|lower != 'economy' %}wrong-class{% endif %}" id="{{ row }}E" data-seat="{{ row }}E">{{ row }}E</div>
+                                <div class="seat available {% if seat_class|lower != 'economy' %}wrong-class{% endif %}" id="{{ row }}F" data-seat="{{ row }}F">{{ row }}F</div>
+                            {% endfor %}
+                        {% endif %}
+
                     </div>
 
                     <div class="row justify-content-center mt-4">
@@ -120,7 +184,6 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="flight_id" value="{{ flight.flight_number }}">
                                 <input type="hidden" name="selected_seats" id="seatsInput">
-                                
                                 <input type="hidden" name="seat_class" value="{{ seat_class }}">
                                 
                                 <div class="d-grid">
@@ -169,10 +232,10 @@
             
             alertContainer.innerHTML = '';
             alertContainer.append(wrapper);
-            
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // Mark taken seats
         takenSeats.forEach(seatId => {
             const seatEl = document.getElementById(seatId);
             if (seatEl) {
@@ -182,10 +245,11 @@
             }
         });
 
-
+        // Click Logic
         seats.forEach(seat => {
             seat.addEventListener("click", function() {
-                if (this.classList.contains("taken")) return;
+                // Ignore clicks on Taken or Wrong Class seats
+                if (this.classList.contains("taken") || this.classList.contains("wrong-class")) return;
 
                 const seatId = this.getAttribute("data-seat");
 
@@ -224,10 +288,10 @@
 
         confirmBtn.addEventListener("click", function() {
             if (!this.classList.contains("disabled")) {
-
                 showAlert("Seats confirmed! Proceeding to payment...", "success");
-
-                document.getElementById("seatForm").submit();
+                setTimeout(() => {
+                    document.getElementById("seatForm").submit();
+                }, 500);
             }
         });
     });
