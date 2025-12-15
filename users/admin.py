@@ -1,16 +1,21 @@
+"""Admin configuration for the users app.
+
+This module defines the admin interface for managing User extensions
+like PassengerProfile within the default User admin.
+"""
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 from .models import PassengerProfile, Admin
 
-# Register your models here.
+
 
 
 
 class PassengerProfileInline(admin.StackedInline):
-    """
-    This class defines how to show the PassengerProfile *inside* the User admin page.
-    'admin.StackedInline' means the fields will be stacked vertically.
+    """Defines the inline display for PassengerProfile in the User admin.
+    
+    Allows editing PassengerProfile fields directly within the User admin interface.
     """
 
     model = PassengerProfile
@@ -22,12 +27,12 @@ class PassengerProfileInline(admin.StackedInline):
 
 
 class UserAdmin(BaseUserAdmin):
-    """
-    This creates our *new* custom admin page for the User model.
-    It inherits all the features of the default admin page ('BaseUserAdmin').
+    """Custom admin configuration for the User model.
+    
+    Extends the default BaseUserAdmin to include the PassengerProfileInline,
+    enabling profile management from the user list.
     """
 
-    # to install the 'PassengerProfileInline' plugin
     inlines = (PassengerProfileInline,)
 
 

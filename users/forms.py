@@ -1,10 +1,11 @@
 
-"""
-This file defines the forms used for user registration.
-It includes:
-- AdminCreationForm: A form for creating new Admin users (is_staff=True).
-- PassengerCreationForm: A form for creating new Passenger users (is_staff=False)
-  and their associated PassengerProfile.
+"""Forms for user registration and profile management.
+
+This module defines the forms used for creating and updating user accounts,
+including:
+- PassengerCreationForm: For registering new passengers.
+- EmailAuthenticationForm: For logging in with email.
+- UserUpdateForm & ProfileUpdateForm: For updating user details.
 """
 
 
@@ -19,12 +20,9 @@ import re
 
 
 class PassengerCreationForm(UserCreationForm):
-    """
-    A form for creating new Passenger accounts.
+    """Form for creating new Passenger accounts and profiles.
 
-    Inherits from UserCreationForm and adds extra fields for the
-    PassengerProfile. Overrides the save() method to create both
-    the User and the linked PassengerProfile.
+    Inherits from UserCreationForm and adds fields for PassengerProfile.
     """
 
     email = forms.EmailField(required=True)
@@ -37,18 +35,13 @@ class PassengerCreationForm(UserCreationForm):
     nationality = forms.CharField(max_length=10, required=False)
 
     class Meta(UserCreationForm.Meta):
-        """
-        Configuration class for the PassengerCreationForm.
-        """
+        """Meta options for PassengerCreationForm."""
         model = User
         fields = ('email', 'first_name', 'last_name')
 
 
     def __init__(self, *args, **kwargs):
-        """
-        This adds Bootstrap styling 'form-control' class
-        to all fields to render correctly
-        """
+        """Initializes the form and applies Bootstrap styling."""
         super().__init__(*args, **kwargs)
 
         for field_name, field in self.fields.items():
@@ -61,22 +54,31 @@ class PassengerCreationForm(UserCreationForm):
         self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Password'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirm Password'})
 
-    def clean_phone_number(self):
 
-        phone = self.cleaned_data.get('phone_number')
-        if phone and not re.match(r'^\d{10}$', phone):
-            raise forms.ValidationError("Phone number must be exactly 10 digits.")
-
-        return phone
 
     def clean_email(self):
+        """Validates that the email is not already registered.
+
+        Returns:
+            str: The validated email address.
+
+        Raises:
+            ValidationError: If a user with this email already exists.
+        """
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("This email is already registered. Please login instead.")
         return email
     
     def clean_nationality(self):
+        """Validates that the nationality (ID) is exactly 10 digits.
 
+        Returns:
+            str: The validated nationality ID.
+
+        Raises:
+            ValidationError: If the ID format is invalid.
+        """
         nid = self.cleaned_data.get('nationality')
 
         if not re.match(r'^\d{10}$', nid):
@@ -84,6 +86,14 @@ class PassengerCreationForm(UserCreationForm):
         return nid
 
     def clean_passport(self):
+        """Validates that the passport number is 9 alphanumeric characters.
+
+        Returns:
+            str: The validated passport number.
+
+        Raises:
+            ValidationError: If the passport format is invalid.
+        """
         passport = self.cleaned_data.get('passport')
         if passport:
 
@@ -92,9 +102,13 @@ class PassengerCreationForm(UserCreationForm):
         return passport
 
     def clean_date_of_birth(self):
-        """
-        A custom validation method that checks if the user is aged 18 or above.
-        Automatically called when form.is_valid() is invoked.
+        """Validates that the passenger is at least 18 years old.
+
+        Returns:
+            date: The validated date of birth.
+
+        Raises:
+            ValidationError: If the user is under 18.
         """
 
         dob = self.cleaned_data.get('date_of_birth')
@@ -110,7 +124,14 @@ class PassengerCreationForm(UserCreationForm):
         return dob
     
     def clean_phone_number(self):
+        """Validates that the phone number is exactly 10 digits.
 
+        Returns:
+            str: The validated phone number.
+
+        Raises:
+            ValidationError: If the phone number format is invalid.
+        """
         phone = self.cleaned_data.get('phone_number')
         if phone and not re.match(r'^\d{10}$', phone):
             raise forms.ValidationError("Phone number must be exactly 10 digits.")
@@ -118,16 +139,13 @@ class PassengerCreationForm(UserCreationForm):
         return phone
 
     def save(self, commit=True):
-        """
-        Saves the new User instance, ensures they are not staff,
-        and creates their linked PassengerProfile.
+        """Saves the User and PassengerProfile.
 
         Args:
-            commit (bool): If True (default), save the user and profile
-                           to the database.
+            commit (bool): Whether to save to the database.
 
         Returns:
-            django.contrib.auth.models.User: The newly created passenger user object.
+            User: The created User instance.
         """
 
         user = super().save(commit=False)
@@ -135,7 +153,6 @@ class PassengerCreationForm(UserCreationForm):
 
         user.username = self.cleaned_data.get('email')
 
-        # very important. This ensures this user is not an admin
         user.is_staff = False
 
         if commit:
@@ -154,12 +171,18 @@ class PassengerCreationForm(UserCreationForm):
 
 
 class EmailAuthenticationForm(AuthenticationForm):
-    """
-    Custom authentication form that uses email address of user.
-    """
+    """Authentication form using email instead of username."""
     username = forms.EmailField(label='Email', widget=forms.EmailInput(attrs={'class': 'form-control'}))
 
     def clean(self):
+        """Validates the email and password against the database.
+
+        Returns:
+            dict: The cleaned data.
+
+        Raises:
+            ValidationError: If the email/password combination is invalid.
+        """
         email = self.cleaned_data.get('username')
         password = self.cleaned_data.get('password')
 
@@ -174,6 +197,11 @@ class EmailAuthenticationForm(AuthenticationForm):
 
 
 class UserUpdateForm(forms.ModelForm):
+    """Form for updating basic user information (first name, last name, email).
+    
+    This form is used by both passengers and admins to update their core
+    user account details.
+    """
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email']
@@ -184,6 +212,11 @@ class UserUpdateForm(forms.ModelForm):
         }
 
 class ProfileUpdateForm(forms.ModelForm):
+    """Form for updating passenger profile details.
+    
+    Allows passengers to update their specific profile information such as
+    phone number, date of birth, nationality, and passport number.
+    """
     class Meta:
         model = PassengerProfile
         fields = ['phone_number', 'date_of_birth', 'nationality', 'passport']
@@ -200,35 +233,60 @@ class ProfileUpdateForm(forms.ModelForm):
             'passport': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '9-char alphanumeric'}),
         }
 
-    # --- Strict Validation Logic ---
+
 
     def clean_phone_number(self):
-            phone = self.cleaned_data.get('phone_number')
-            if phone and not re.match(r'^\d{10}$', phone):
-                raise forms.ValidationError("Phone number must be exactly 10 digits.")
-            return phone
+        """Validates that the phone number is exactly 10 digits.
+
+        Returns:
+            str: The validated phone number.
+        """
+        phone = self.cleaned_data.get('phone_number')
+        if phone and not re.match(r'^\d{10}$', phone):
+            raise forms.ValidationError("Phone number must be exactly 10 digits.")
+        return phone
 
     def clean_nationality(self):
+        """Validates that the nationality (ID) is exactly 10 digits.
+
+        Returns:
+            str: The validated nationality ID.
+        """
         nid = self.cleaned_data.get('nationality')
-        # Check: Must be exactly 10 digits if provided
+
         if nid and not re.match(r'^\d{10}$', nid):
             raise forms.ValidationError("National ID must be exactly 10 numbers.")
         return nid
 
     def clean_passport(self):
+        """Validates that the passport number is 9 alphanumeric characters.
+
+        Returns:
+            str: The validated passport number.
+        """
         passport = self.cleaned_data.get('passport')
         if passport and not re.match(r'^[A-Za-z0-9]{9}$', passport):
             raise forms.ValidationError("Passport must be exactly 9 alphanumeric characters.")
         return passport
 
     def clean_date_of_birth(self):
+        """Validates the date of birth.
+
+        Ensures the date is not in the future and the user is at least 18 years old.
+
+        Returns:
+            date: The validated date of birth.
+
+        Raises:
+            ValidationError: If the date is invalid or user is underage.
+        """
         dob = self.cleaned_data.get('date_of_birth')
         if dob:
-            # Check 1: Cannot be in the future
+
             if dob > date.today():
                 raise forms.ValidationError("Date of birth cannot be in the future.")
             
-            # Check 2: Must be at least 18 years old
+
             today = date.today()
             cutoff_date = today.replace(year=today.year - 18)
             if dob > cutoff_date:

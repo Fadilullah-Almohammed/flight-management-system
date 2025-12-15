@@ -29,15 +29,13 @@ class BookingTests(TestCase):
             flight=self.flight, passenger=self.profile, seat_class='Economy', number_of_passengers=1, status='Pending'
         )
 
-    # --- ORIGINAL TESTS ---
+
     def test_my_bookings_view(self):
         response = self.client.get(reverse('my_bookings'))
         self.assertEqual(response.status_code, 200)
 
     def test_seat_selection_view(self):
-
-        url = reverse('seat_selection', args=['TS123', 'Economy'])
-        response = self.client.get(url)
+        response = self.client.get(reverse('seat_selection'), {'flight_id': 'TS123'})
         self.assertEqual(response.status_code, 200)
 
     def test_passenger_details_post(self):
@@ -59,43 +57,40 @@ class BookingTests(TestCase):
         response = self.client.get(reverse('download_ticket_pdf', args=[self.booking.booking_id]))
         self.assertEqual(response.status_code, 200)
 
-    # --- 10 NEW TESTS ---
+
 
     def test_booking_model_total_price_logic(self):
-        # Test model method directly
+
         self.booking.number_of_passengers = 3
         self.assertEqual(self.booking.total_price(), 300.00) # 3 * 100
 
     def test_booking_model_invalid_seat_class(self):
         self.booking.seat_class = 'Space'
-        # total_price should raise error or return None/fail based on your logic
-        # Your model raises ValidationError
+
         with self.assertRaises(ValidationError):
             self.booking.total_price()
 
     def test_booking_passenger_validation(self):
-        # Number of passengers must be > 0
+
         self.booking.number_of_passengers = 0
         with self.assertRaises(ValidationError):
             self.booking.check_number_of_passenger()
 
     def test_ticket_seat_format_validation(self):
-        # Regex check: '1A' is valid, 'ABC' might be invalid depending on regex
         ticket = Ticket(booking=self.booking, seat_number='!!', passenger_name='Test', passport='A12345678', passenger_dob='1990-01-01', nationality='USA')
-        # We need to call full_clean() to trigger validators
         with self.assertRaises(ValidationError):
             ticket.full_clean()
 
     def test_create_booking_missing_fields_fails(self):
-        # Submitting form without passport
+
         data = {
             'flight_id': 'TS123', 'seats_str': '1A', 'seat_class': 'Economy',
             '1A-passenger_name': 'John', 
-            # Missing Passport
+
             '1A-nationality': '1112223334', '1A-passenger_dob': '1990-01-01'
         }
         response = self.client.post(reverse('create_booking'), data)
-        # Should re-render page (200) with errors, not redirect (302)
+
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'bookings/passenger_details.html')
 
@@ -108,14 +103,13 @@ class BookingTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_seat_selection_invalid_flight(self):
-        
-        url = reverse('seat_selection', args=['FAKE999', 'Economy'])
-        response = self.client.get(url)
-        # View uses get_object_or_404 -> 404
+
+        response = self.client.get(reverse('seat_selection'), {'flight_id': 'FAKE999'})
+
         self.assertEqual(response.status_code, 404)
 
     def test_create_booking_business_price(self):
-        # Simulate booking business class via POST
+
         data = {
             'flight_id': 'TS123', 'seats_str': '1A', 'seat_class': 'Business',
             '1A-passenger_name': 'John', '1A-passport': 'A12345678',
@@ -123,19 +117,19 @@ class BookingTests(TestCase):
         }
         self.client.post(reverse('create_booking'), data)
         
-        # Check DB
+
         new_booking = Booking.objects.last()
         self.assertEqual(new_booking.seat_class, 'Business')
 
     def test_download_ticket_access_denied(self):
-        # Logged out user
+
         self.client.logout()
         url = reverse('download_ticket_pdf', args=[self.booking.booking_id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302) # Redirect to login
 
     def test_booking_defaults(self):
-        # Test default values in model
+
         b = Booking.objects.create(flight=self.flight, passenger=self.profile)
         self.assertEqual(b.status, 'Pending')
         self.assertEqual(b.seat_class, 'Economy')

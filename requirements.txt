@@ -1,7 +1,6 @@
-Django==5.2.7
+Django>=5.2.7
 python-dotenv       
-
 xhtml2pdf>=0.2.15
-apscheduler=3.10.0
+apscheduler>=3.10.0
 amadeus>=9.0.0            
 stripe>=7.0.0            

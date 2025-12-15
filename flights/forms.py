@@ -4,8 +4,10 @@ from django.core.exceptions import ValidationError
 
 
 class NewFlightForm(forms.ModelForm):
+    """Form for creating a new flight."""
 
     class Meta:
+        """Meta options for NewFlightForm."""
 
         model = Flight
         fields = [
@@ -27,6 +29,7 @@ class NewFlightForm(forms.ModelForm):
 
     
     def __init__(self, *args, **kwargs):
+        """Initializes the NewFlightForm and applies Bootstrap classes."""
         super().__init__(*args, **kwargs)
 
         for field_name ,field in self.fields.items():
@@ -46,8 +49,13 @@ class NewFlightForm(forms.ModelForm):
 
     
     def clean(self):
-        """
-        Override clean() method to validate model
+        """Validates the new flight data.
+
+        Returns:
+            dict: The cleaned data.
+
+        Raises:
+            ValidationError: If the flight details are invalid.
         """
 
         cleaned_data = super().clean()
@@ -62,7 +70,9 @@ class NewFlightForm(forms.ModelForm):
     
 
 class FlightForm(forms.ModelForm):
+    """Form for editing an existing flight."""
     class Meta:
+        """Meta options for FlightForm."""
         model = Flight
         fields = [
             'flight_number', 'aircraft', 'departure_airport', 'arrival_airport',
@@ -83,6 +93,14 @@ class FlightForm(forms.ModelForm):
         }
 
     def clean(self):
+        """Validates flight updates (times and airports).
+
+        Returns:
+            dict: The cleaned data.
+
+        Raises:
+            ValidationError: If timing or airport selection is invalid.
+        """
         cleaned_data = super().clean()
         dep = cleaned_data.get('departure_datetime')
         arr = cleaned_data.get('arrival_datetime')

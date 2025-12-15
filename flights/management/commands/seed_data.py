@@ -1,4 +1,4 @@
-# flights/management/commands/seed_data.py
+
 import random
 from datetime import timedelta, date
 from django.core.management.base import BaseCommand
@@ -6,28 +6,28 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.conf import settings
 
-# Import all your models
+
 from users.models import Admin, PassengerProfile
 from flights.models import Airport, Aircraft, Flight
 from bookings.models import Booking, Ticket
 
 class Command(BaseCommand):
+    """Seed the database with initial data (Users, Airports, Aircrafts, Flights)."""
     help = 'Populate the database with Users, Flights, and Bookings'
 
     def handle(self, *args, **kwargs):
+        """Executes the seed command to populate the database.
+
+        Creates users, passenger profiles, airports, aircrafts, flights, and dummy bookings.
+        """
         self.stdout.write("🌱 Starting Database Seeding...")
 
-        # ==========================================
-        # 1. CREATE USERS & PROFILES
-        # ==========================================
         self.stdout.write("... Creating Users")
         
-        # A. Superuser
         if not User.objects.filter(username='admin').exists():
             User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
             self.stdout.write(" - Superuser 'admin' created (pass: admin123)")
 
-        # B. Staff Admins (Flight Managers)
         for i in range(1, 3):
             username = f'staff{i}'
             if not User.objects.filter(username=username).exists():
@@ -37,13 +37,12 @@ class Command(BaseCommand):
                 Admin.objects.create(user=u) # Create Admin Profile
                 self.stdout.write(f" - Staff '{username}' created")
 
-        # C. Passengers
         passengers = []
         for i in range(1, 11):
             username = f'passenger{i}'
             if not User.objects.filter(username=username).exists():
                 u = User.objects.create_user(username, f'p{i}@gmail.com', 'pass123')
-                # Create Passenger Profile
+
                 PassengerProfile.objects.create(
                     user=u,
                     passport=f"P{10000+i}",
@@ -56,9 +55,6 @@ class Command(BaseCommand):
             else:
                 passengers.append(User.objects.get(username=username))
 
-        # ==========================================
-        # 2. CREATE AIRPORTS & AIRCRAFT
-        # ==========================================
         self.stdout.write("... Creating Infrastructure")
 
         airports_data = [
@@ -94,9 +90,6 @@ class Command(BaseCommand):
             )
             db_aircrafts.append(ac)
 
-        # ==========================================
-        # 3. CREATE FLIGHTS
-        # ==========================================
         self.stdout.write("... Creating Flights")
         
         base_time = timezone.now() + timedelta(days=1)
@@ -128,19 +121,15 @@ class Command(BaseCommand):
             if created:
                 flights_created.append(flight)
 
-        # ==========================================
-        # 4. CREATE BOOKINGS
-        # ==========================================
         self.stdout.write("... Creating Dummy Bookings")
         
-        # Only book if we have new flights/passengers
         if flights_created and passengers:
             for _ in range(30): # Create 30 random bookings
                 user = random.choice(passengers)
                 flight = random.choice(flights_created)
                 seat_class = random.choice(['Economy', 'Business'])
                 
-                # Get price based on class
+
                 price = flight.economy_price if seat_class == 'Economy' else flight.business_price
                 
    

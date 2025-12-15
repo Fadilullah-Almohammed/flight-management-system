@@ -28,10 +28,9 @@ class FlightTests(TestCase):
             status='Scheduled'
         )
 
-    # --- ORIGINAL TESTS ---
+
     def test_flight_model_logic(self):
-        # Total = 100 (Eco set in setup) + 16 (Biz Default) + 8 (First Default) = 124
-        # We expect 124 available seats initially
+
         self.assertEqual(self.flight.available_seats_dynamic(), 124)
 
     def test_view_flights_public(self):
@@ -56,7 +55,7 @@ class FlightTests(TestCase):
         response = self.client.get(reverse('generate_report_pdf'))
         self.assertEqual(response.status_code, 200)
 
-    # --- 10 NEW TESTS ---
+
 
     def test_delete_flight_logic(self):
         self.client.login(username='admin', password='password')
@@ -69,7 +68,7 @@ class FlightTests(TestCase):
         self.client.login(username='user', password='password')
         url = reverse('delete_flight', args=['SV2020'])
         response = self.client.post(url)
-        # Should redirect or error, flight should still exist
+
         self.assertTrue(Flight.objects.filter(flight_number='SV2020').exists())
 
     def test_search_flight_no_results(self):
@@ -81,7 +80,7 @@ class FlightTests(TestCase):
 
     def test_search_flight_price_filter(self):
         self.client.login(username='user', password='password')
-        # Filter max price 50 (flight is 100) -> Should return 0
+
         date_str = (timezone.now() + timedelta(days=0)).strftime('%Y-%m-%d')
         data = {
             'origin': 'JFK', 'destination': 'LHR', 
@@ -107,7 +106,7 @@ class FlightTests(TestCase):
         self.client.login(username='admin', password='password')
         url = reverse('edit_flight', args=['SV2020'])
         
-        # Update price to 999
+
         data = {
             'flight_number': 'SV2020',
             'aircraft': self.aircraft.aircraft_id,
@@ -129,16 +128,16 @@ class FlightTests(TestCase):
         self.assertEqual(str(self.flight), "SV2020")
 
     def test_remove_passenger_cancel_booking_logic(self):
-        # Setup: Booking with 1 passenger
+
         self.client.login(username='admin', password='password')
         prof = PassengerProfile.objects.create(user=self.user)
         bk = Booking.objects.create(flight=self.flight, passenger=prof, status='Confirmed')
         tk = Ticket.objects.create(booking=bk, seat_number='1A', passenger_name='T', passport='P', passenger_dob='2000-01-01', nationality='N')
         
-        # Action: Remove the ONLY passenger
+
         self.client.post(reverse('remove_passenger', args=[tk.ticket_id]))
         
-        # Result: Booking should be Cancelled because no passengers left
+
         bk.refresh_from_db()
         self.assertEqual(bk.status, 'Cancelled')
 
