@@ -91,7 +91,7 @@
                             <button class="btn btn-primary btn-lg shadow-sm" type="submit" id="submitBtn">
                                 Pay & Confirm Booking
                             </button>
-                            <a href="{% url 'seat_selection' %}?flight_id={{ booking.flight.flight_number }}" class="btn btn-outline-secondary">
+                            <a href="{% url 'seat_selection' booking.flight.flight_number booking.seat_class %}" class="btn btn-outline-secondary">
                                 Cancel & Return
                             </a>
                         </div>

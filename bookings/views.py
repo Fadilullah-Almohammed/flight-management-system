@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import *
@@ -215,8 +215,7 @@ def booking_details(request, booking_id):
         return render(request, 'bookings/booking_details.html', context)
         
     except PassengerProfile.DoesNotExist:
-        messages.error(request, "Profile error.")
-        return redirect('passenger_dashboard')
+        raise Http404('Passenger profile not found for this user!')
 
 @login_required
 def cancel_ticket(request, ticket_id):
