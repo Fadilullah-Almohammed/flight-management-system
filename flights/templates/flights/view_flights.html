@@ -10,15 +10,17 @@
         box-shadow: 0 0.5rem 1rem 0 rgba(0, 0, 0, 0.05);
         overflow: hidden;
     }
+
     .table-header {
         background-color: #f8f9fa;
         border-bottom: 2px solid #e9ecef;
     }
+
     .airport-badge {
         font-weight: 600;
         font-size: 0.9rem;
     }
-    /* Search Bar Styling */
+
     .search-card {
         border: 0;
         border-radius: 1rem;
@@ -31,7 +33,7 @@
 
 {% block content %}
 <div class="container">
-    
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2><i class="bi bi-airplane me-2"></i>Flight Management</h2>
@@ -50,17 +52,17 @@
                         <span class="input-group-text bg-white border-0 text-muted ps-3">
                             <i class="bi bi-search"></i>
                         </span>
-                        <input type="text" name="search" class="form-control border-0 shadow-none" 
-                               placeholder="Search by Flight No, Airport Code, City, or Aircraft..." 
-                               value="{{ search_query }}">
+                        <input type="text" name="search" class="form-control border-0 shadow-none"
+                            placeholder="Search by Flight No, Airport Code, City, or Aircraft..."
+                            value="{{ search_query }}">
                     </div>
                 </div>
                 <div class="col-auto pe-2">
                     <button type="submit" class="btn btn-primary px-4 rounded-pill">Search</button>
                     {% if search_query %}
-                        <a href="{% url 'view_flights' %}" class="btn btn-light rounded-pill ms-1" title="Clear Search">
-                            <i class="bi bi-x-lg"></i>
-                        </a>
+                    <a href="{% url 'view_flights' %}" class="btn btn-light rounded-pill ms-1" title="Clear Search">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
                     {% endif %}
                 </div>
             </form>
@@ -88,15 +90,17 @@
                             <td class="ps-4 fw-bold text-primary">
                                 {{ flight.flight_number }}
                             </td>
-                            
+
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="text-center me-2">
-                                        <span class="badge bg-light text-dark border airport-badge">{{ flight.departure_airport.airport_code }}</span>
+                                        <span class="badge bg-light text-dark border airport-badge">{{
+                                            flight.departure_airport.airport_code }}</span>
                                     </div>
                                     <i class="bi bi-arrow-right text-muted mx-1"></i>
                                     <div class="text-center ms-2">
-                                        <span class="badge bg-light text-dark border airport-badge">{{ flight.arrival_airport.airport_code }}</span>
+                                        <span class="badge bg-light text-dark border airport-badge">{{
+                                            flight.arrival_airport.airport_code }}</span>
                                     </div>
                                 </div>
                                 <small class="text-muted d-block mt-1">
@@ -125,22 +129,21 @@
                             </td>
 
                             <td class="pe-4 text-end">
-                                
+
                                 <div class="btn-group">
-                                    <a href="{% url 'flight_manifest' flight.flight_number %}" class="btn btn-sm btn-outline-info" title="View Manifest">
+                                    <a href="{% url 'flight_manifest' flight.flight_number %}"
+                                        class="btn btn-sm btn-outline-info" title="View Manifest">
                                         <i class="bi bi-people-fill"></i>
                                     </a>
-                                    <a href="{% url 'edit_flight' flight.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                    <a href="{% url 'edit_flight' flight.pk %}" class="btn btn-sm btn-outline-secondary"
+                                        title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    
-                                    <button type="button" 
-                                            class="btn btn-sm btn-outline-danger" 
-                                            title="Delete"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#deleteModal"
-                                            data-flight-number="{{ flight.flight_number }}"
-                                            data-delete-url="{% url 'delete_flight' flight.flight_number %}">
+
+                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Delete"
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                        data-flight-number="{{ flight.flight_number }}"
+                                        data-delete-url="{% url 'delete_flight' flight.flight_number %}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -152,13 +155,15 @@
                                 <div class="text-muted">
                                     <i class="bi bi-search display-4 mb-3 d-block opacity-25"></i>
                                     {% if search_query %}
-                                        <h5>No flights match your search</h5>
-                                        <p class="mb-3">Try adjusting your search terms.</p>
-                                        <a href="{% url 'view_flights' %}" class="btn btn-outline-primary btn-sm">Clear Search</a>
+                                    <h5>No flights match your search</h5>
+                                    <p class="mb-3">Try adjusting your search terms.</p>
+                                    <a href="{% url 'view_flights' %}" class="btn btn-outline-primary btn-sm">Clear
+                                        Search</a>
                                     {% else %}
-                                        <h5>No flights found</h5>
-                                        <p class="mb-3">Get started by adding a new flight schedule.</p>
-                                        <a href="{% url 'add_new_flight' %}" class="btn btn-outline-primary btn-sm">Add Flight</a>
+                                    <h5>No flights found</h5>
+                                    <p class="mb-3">Get started by adding a new flight schedule.</p>
+                                    <a href="{% url 'add_new_flight' %}" class="btn btn-outline-primary btn-sm">Add
+                                        Flight</a>
                                     {% endif %}
                                 </div>
                             </td>
@@ -176,15 +181,17 @@
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Deletion</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <p class="mb-0 fs-5">Are you sure you want to delete flight <strong id="modalFlightNumber"></strong>?</p>
+                <p class="mb-0 fs-5">Are you sure you want to delete flight <strong id="modalFlightNumber"></strong>?
+                </p>
                 <p class="text-muted small mt-2">This action cannot be undone.</p>
             </div>
             <div class="modal-footer bg-light border-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                
+
                 <form method="POST" id="deleteForm">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">Delete Flight</button>
@@ -200,17 +207,17 @@
 <script>
 
     var deleteModal = document.getElementById('deleteModal');
-    
+
     deleteModal.addEventListener('show.bs.modal', function (event) {
 
         var button = event.relatedTarget;
-        
+
         var flightNumber = button.getAttribute('data-flight-number');
         var deleteUrl = button.getAttribute('data-delete-url');
-        
+
         var modalTitle = deleteModal.querySelector('#modalFlightNumber');
         var deleteForm = deleteModal.querySelector('#deleteForm');
-        
+
         modalTitle.textContent = flightNumber;
         deleteForm.action = deleteUrl;
     });

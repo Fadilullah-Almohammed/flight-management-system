@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <style>
         @page {
             size: A4;
             margin: 1cm;
+
             footer_frame {
                 -pdf-frame-content: footerContent;
                 bottom: 0cm;
@@ -14,19 +16,53 @@
             }
         }
 
-        body { font-family: Helvetica, sans-serif; font-size: 10pt; color: #333333; }
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #333333;
+        }
 
-        /* Header */
-        .header-table { width: 100%; margin-bottom: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
-        .brand { font-size: 24pt; color: #0d6efd; font-weight: bold; }
-        .report-title { font-size: 16pt; color: #555; text-align: right; }
-        .meta-info { font-size: 9pt; color: #777; text-align: right; margin-top: 5px; }
 
-        /* Summary Cards */
-        .cards-table { width: 100%; margin-bottom: 30px; }
-        .card-cell { width: 48%; } /* 2 Columns */
-        .spacer-cell { width: 4%; }
-        
+        .header-table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #0d6efd;
+            padding-bottom: 10px;
+        }
+
+        .brand {
+            font-size: 24pt;
+            color: #0d6efd;
+            font-weight: bold;
+        }
+
+        .report-title {
+            font-size: 16pt;
+            color: #555;
+            text-align: right;
+        }
+
+        .meta-info {
+            font-size: 9pt;
+            color: #777;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+
+        .cards-table {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .card-cell {
+            width: 48%;
+        }
+
+        .spacer-cell {
+            width: 4%;
+        }
+
         .card {
             background-color: #f8f9fa;
             border: 1px solid #ddd;
@@ -34,26 +70,84 @@
             padding: 15px;
             text-align: center;
         }
-        .card-label { font-size: 9pt; text-transform: uppercase; color: #666; margin-bottom: 5px; font-weight: bold; }
-        .card-value { font-size: 18pt; font-weight: bold; color: #333; }
-        .card-value.tickets { color: #0d6efd; }
-        .card-value.flights { color: #ffc107; }
 
-        /* Data Table */
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .card-label {
+            font-size: 9pt;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .card-value {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .card-value.tickets {
+            color: #0d6efd;
+        }
+
+        .card-value.flights {
+            color: #ffc107;
+        }
+
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
         .data-table th {
-            background-color: #0d6efd; color: #ffffff; font-weight: bold; padding: 8px; text-align: left; font-size: 9pt; border: 1px solid #0d6efd;
+            background-color: #0d6efd;
+            color: #ffffff;
+            font-weight: bold;
+            padding: 8px;
+            text-align: left;
+            font-size: 9pt;
+            border: 1px solid #0d6efd;
         }
+
         .data-table td {
-            padding: 8px; border-bottom: 1px solid #eeeeee; border-left: 1px solid #eeeeee; border-right: 1px solid #eeeeee; font-size: 9pt; vertical-align: middle;
+            padding: 8px;
+            border-bottom: 1px solid #eeeeee;
+            border-left: 1px solid #eeeeee;
+            border-right: 1px solid #eeeeee;
+            font-size: 9pt;
+            vertical-align: middle;
         }
-        .data-table tr:nth-child(even) { background-color: #fcfcfc; }
 
-        .badge { font-size: 8pt; padding: 3px 6px; border-radius: 4px; color: white; }
-        .bg-primary { color: #0d6efd; } .bg-danger { color: #dc3545; } .bg-success { color: #198754; } .bg-secondary { color: #6c757d; }
+        .data-table tr:nth-child(even) {
+            background-color: #fcfcfc;
+        }
 
+        .badge {
+            font-size: 8pt;
+            padding: 3px 6px;
+            border-radius: 4px;
+            color: white;
+        }
+
+        .bg-primary {
+            color: #0d6efd;
+        }
+
+        .bg-danger {
+            color: #dc3545;
+        }
+
+        .bg-success {
+            color: #198754;
+        }
+
+        .bg-secondary {
+            color: #6c757d;
+        }
     </style>
 </head>
+
 <body>
 
     <table class="header-table">
@@ -62,7 +156,7 @@
             <td valign="bottom" align="right">
                 <div class="report-title">{{ report_type|title }} Report</div>
                 <div class="meta-info">
-                    Generated by: {{ user.first_name }} {{ user.last_name }}<br/>
+                    Generated by: {{ user.first_name }} {{ user.last_name }}<br />
                     Date: {{ generated_at|date:"F d, Y" }}
                 </div>
             </td>
@@ -78,7 +172,7 @@
                 </div>
             </td>
             <td class="spacer-cell"></td>
-            
+
             <td class="card-cell">
                 <div class="card">
                     <div class="card-label">Tickets Sold</div>
@@ -99,21 +193,21 @@
                 <th width="20%">Route</th>
                 <th width="20%">Date</th>
                 {% if report_type == 'occupancy' %}
-                    <th width="15%">Capacity</th>
-                    <th width="15%">Sold</th>
-                    <th width="15%">Load %</th>
+                <th width="15%">Capacity</th>
+                <th width="15%">Sold</th>
+                <th width="15%">Load %</th>
                 {% elif report_type == 'financial' %}
-                    <th width="15%">Economy</th>
-                    <th width="15%">Business</th>
-                    <th width="15%">First</th>
-                    <th width="20%">Revenue</th>
+                <th width="15%">Economy</th>
+                <th width="15%">Business</th>
+                <th width="15%">First</th>
+                <th width="20%">Revenue</th>
                 {% else %}
-                    <th width="15%">Status</th>
-                    <th width="15%">Sold</th>
-                    <th width="15%">Load %</th>
-                    {% if show_financials %}
-                    <th width="20%">Revenue</th>
-                    {% endif %}
+                <th width="15%">Status</th>
+                <th width="15%">Sold</th>
+                <th width="15%">Load %</th>
+                {% if show_financials %}
+                <th width="20%">Revenue</th>
+                {% endif %}
                 {% endif %}
             </tr>
         </thead>
@@ -121,36 +215,37 @@
             {% for item in flight_data %}
             <tr>
                 <td style="font-weight: bold; color: #0d6efd;">{{ item.flight.flight_number }}</td>
-                <td>{{ item.flight.departure_airport.airport_code }} &rarr; {{ item.flight.arrival_airport.airport_code }}</td>
+                <td>{{ item.flight.departure_airport.airport_code }} &rarr; {{ item.flight.arrival_airport.airport_code
+                    }}</td>
                 <td>{{ item.flight.departure_datetime|date:"Y-m-d" }}</td>
 
                 {% if report_type == 'occupancy' %}
-                    <td>{{ item.capacity }}</td>
-                    <td>{{ item.sold }}</td>
-                    <td>{{ item.occupancy }}%</td>
+                <td>{{ item.capacity }}</td>
+                <td>{{ item.sold }}</td>
+                <td>{{ item.occupancy }}%</td>
                 {% elif report_type == 'financial' %}
-                    <td>{{ item.eco_sold }}</td>
-                    <td>{{ item.bus_sold }}</td>
-                    <td>{{ item.first_sold }}</td>
-                    <td style="font-weight: bold; color: #198754;">{{ item.revenue }}</td>
+                <td>{{ item.eco_sold }}</td>
+                <td>{{ item.bus_sold }}</td>
+                <td>{{ item.first_sold }}</td>
+                <td style="font-weight: bold; color: #198754;">{{ item.revenue }}</td>
                 {% else %}
-                    <td>
-                        {% if item.status == 'Scheduled' %}
-                            <span class="bg-primary">Scheduled</span>
-                        {% elif item.status == 'Cancelled' %}
-                            <span class="bg-danger">Cancelled</span>
-                        {% elif item.status == 'Landed' %}
-                            <span class="bg-success">Landed</span>
-                        {% else %}
-                            <span class="bg-secondary">{{ item.status }}</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ item.sold }}</td>
-                    <td>{{ item.occupancy }}%</td>
-                    
-                    {% if show_financials %}
-                        <td style="color: #198754; font-weight: bold;">{{ item.revenue }}</td>
+                <td>
+                    {% if item.status == 'Scheduled' %}
+                    <span class="bg-primary">Scheduled</span>
+                    {% elif item.status == 'Cancelled' %}
+                    <span class="bg-danger">Cancelled</span>
+                    {% elif item.status == 'Landed' %}
+                    <span class="bg-success">Landed</span>
+                    {% else %}
+                    <span class="bg-secondary">{{ item.status }}</span>
                     {% endif %}
+                </td>
+                <td>{{ item.sold }}</td>
+                <td>{{ item.occupancy }}%</td>
+
+                {% if show_financials %}
+                <td style="color: #198754; font-weight: bold;">{{ item.revenue }}</td>
+                {% endif %}
                 {% endif %}
             </tr>
             {% endfor %}
@@ -162,4 +257,5 @@
     </div>
 
 </body>
+
 </html>

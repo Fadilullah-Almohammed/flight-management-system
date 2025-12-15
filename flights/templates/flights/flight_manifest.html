@@ -4,7 +4,6 @@
 
 {% block extra_css %}
 <style>
-    /* Dashboard Card Style */
     .dashboard-card {
         border: 0;
         border-radius: 1rem;
@@ -12,7 +11,7 @@
         background-color: #ffffff;
     }
 
-    /* Table Styles */
+
     .table th {
         font-weight: 600;
         color: #6c757d;
@@ -21,7 +20,7 @@
         background-color: #f8f9fa;
     }
 
-    /* Flight Info Header Box */
+
     .flight-header-box {
         background-color: #ffffff;
         border-left: 5px solid #0d6efd;
@@ -34,7 +33,7 @@
 
 {% block content %}
 <div class="container py-4">
-    
+
     <div class="mb-4">
         <a href="{% url 'view_flights' %}" class="text-decoration-none text-muted">
             <i class="bi bi-arrow-left"></i> Back to Flight List
@@ -47,12 +46,12 @@
             <h2 class="fw-bold mb-0">Flight {{ flight.flight_number }}</h2>
             <div class="mt-2">
                 <span class="badge bg-light text-dark border me-2">
-                    <i class="bi bi-geo-alt-fill text-primary"></i> 
-                    {{ flight.departure_airport.city }} ({{ flight.departure_airport.airport_code }}) &rarr; 
+                    <i class="bi bi-geo-alt-fill text-primary"></i>
+                    {{ flight.departure_airport.city }} ({{ flight.departure_airport.airport_code }}) &rarr;
                     {{ flight.arrival_airport.city }} ({{ flight.arrival_airport.airport_code }})
                 </span>
                 <span class="badge bg-light text-dark border">
-                    <i class="bi bi-calendar-event text-primary"></i> 
+                    <i class="bi bi-calendar-event text-primary"></i>
                     {{ flight.departure_datetime|date:"M d, Y - h:i A" }}
                 </span>
             </div>
@@ -68,30 +67,30 @@
     <form method="GET" action="{% url 'flight_manifest' flight.flight_number %}" class="card dashboard-card mb-4">
         <div class="card-body p-3">
             <div class="row g-2 align-items-center">
-                
+
                 <div class="col-md-6">
                     <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                        <input type="text" name="search" class="form-control border-start-0" 
-                               placeholder="Search Name, Passport, Booking Ref, or Class..." 
-                               value="{{ search_query }}">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i
+                                class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control border-start-0"
+                            placeholder="Search Name, Passport, Booking Ref, or Class..." value="{{ search_query }}">
                     </div>
                 </div>
-                
+
                 <div class="col-md-3 offset-md-3">
                     <div class="input-group">
                         <span class="input-group-text bg-light">Sort By</span>
                         <select name="sort" class="form-select" onchange="this.form.submit()">
-                            <option value="seat" {% if sort_param == 'seat' or not sort_param %}selected{% endif %}>
+                            <option value="seat" {% if sort_param=='seat' or not sort_param %}selected{% endif %}>
                                 Seat Number (A-Z)
                             </option>
-                            <option value="name" {% if sort_param == 'name' %}selected{% endif %}>
+                            <option value="name" {% if sort_param=='name' %}selected{% endif %}>
                                 Passenger Name (A-Z)
                             </option>
                         </select>
                     </div>
                 </div>
-                
+
             </div>
         </div>
     </form>
@@ -126,28 +125,27 @@
                             <td class="text-muted">{{ ticket.passport|default:"--" }}</td>
                             <td>
                                 {% if ticket.booking.seat_class == 'Business' %}
-                                    <span class="badge bg-warning text-dark">Business</span>
+                                <span class="badge bg-warning text-dark">Business</span>
                                 {% elif ticket.booking.seat_class == 'First' %}
-                                    <span class="badge bg-info text-dark">First</span>
+                                <span class="badge bg-info text-dark">First</span>
                                 {% else %}
-                                    <span class="badge bg-success bg-opacity-25 text-success">Economy</span>
+                                <span class="badge bg-success bg-opacity-25 text-success">Economy</span>
                                 {% endif %}
                             </td>
                             <td>#{{ ticket.booking.booking_id }}</td>
                             <td>{{ ticket.nationality|default:"--" }}</td>
                             <td class="text-end pe-4">
                                 <div class="dropdown">
-                                    <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <button class="btn btn-sm btn-light border dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown">
                                         Manage
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
                                         <li>
-                                            <button class="dropdown-item text-danger" 
-                                                    type="button"
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#removeModal"
-                                                    data-passenger-name="{{ ticket.passenger_name }}"
-                                                    data-remove-url="{% url 'remove_passenger' ticket.ticket_id %}">
+                                            <button class="dropdown-item text-danger" type="button"
+                                                data-bs-toggle="modal" data-bs-target="#removeModal"
+                                                data-passenger-name="{{ ticket.passenger_name }}"
+                                                data-remove-url="{% url 'remove_passenger' ticket.ticket_id %}">
                                                 <i class="bi bi-person-x me-2"></i>Remove Passenger
                                             </button>
                                         </li>
@@ -167,7 +165,7 @@
                 </table>
             </div>
         </div>
-        
+
         <div class="card-footer bg-white border-0 py-3">
             <small class="text-muted">Showing {{ tickets|length }} passengers</small>
         </div>
@@ -179,7 +177,8 @@
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Removal</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <p class="mb-0 fs-5">Remove <strong id="modalPassengerName"></strong> from this flight?</p>
@@ -204,10 +203,10 @@
         var button = event.relatedTarget;
         var passengerName = button.getAttribute('data-passenger-name');
         var removeUrl = button.getAttribute('data-remove-url');
-        
+
         var modalTitle = removeModal.querySelector('#modalPassengerName');
         var removeForm = removeModal.querySelector('#removeForm');
-        
+
         modalTitle.textContent = passengerName;
         removeForm.action = removeUrl;
     });

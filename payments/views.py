@@ -7,10 +7,21 @@ from bookings.models import Booking
 
 
 
-# Create your views here.
+
 
 @login_required
 def process_payment(request, booking_id):  
+    """Handles the payment processing for a booking.
+
+    Creates a Payment record and updates the booking status to 'Confirmed'.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        booking_id: The unique identifier of the booking to pay for.
+
+    Returns:
+        HttpResponse: A redirect to the booking details page or the payment page.
+    """
 
     booking = get_object_or_404(Booking, booking_id=booking_id, passenger__user=request.user)
     

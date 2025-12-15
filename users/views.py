@@ -1,3 +1,8 @@
+"""Views for the users app.
+
+This module contains the view functions for user registration, authentication,
+dashboard access (for both passengers and admins), and profile management.
+"""
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
@@ -14,6 +19,17 @@ from bookings.models import Booking
 
 
 def passenger_register(request: HttpRequest) -> HttpResponse:
+    """Handles the registration of new passengers.
+    
+    Processes the PassengerCreationForm. If valid, creates a new user and
+    redirects to the login page. If invalid, re-renders the form with errors.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered registration page or a redirect to login.
+    """
 
     if request.method == 'POST':
     
@@ -35,6 +51,17 @@ def passenger_register(request: HttpRequest) -> HttpResponse:
 
 
 def user_login(request: HttpRequest) -> HttpResponse:
+    """Handles user authentication and login.
+    
+    Authenticates the user using email and password. Redirects to the appropriate
+    dashboard (Admin or Passenger) upon successful login.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered login page or a redirect to the dashboard.
+    """
 
 
     if request.method == 'POST':
@@ -70,6 +97,14 @@ def user_login(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def user_logout(request: HttpRequest) -> HttpResponse:
+    """Logs out the current user.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: A redirect to the login page.
+    """
 
     logout(request)
     messages.success(request, 'You have been logged out successfully')
@@ -78,10 +113,13 @@ def user_logout(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def passenger_dashboard(request):
-    """
-    The main dashboard view.
-    1. Loads airports for the 'Search Flight' widget.
-    2. Loads upcoming bookings for the 'My Upcoming Flights' widget.
+    """Renders the passenger dashboard with flight search and upcoming bookings.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered passenger dashboard.
     """
     
     airports = Airport.objects.all().order_by('city')
@@ -105,6 +143,14 @@ def passenger_dashboard(request):
 
 @login_required
 def admin_dashboard(request):
+    """Renders the admin dashboard with statistics on flights and bookings.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered admin dashboard.
+    """
 
     if not request.user.is_staff:
         messages.error(request, 'Sorry. You are not authorized to view that page!')
@@ -145,6 +191,14 @@ def admin_dashboard(request):
 
 @login_required
 def view_profile(request):
+    """Displays the current user's profile information.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered profile view page.
+    """
     
     user = request.user
     profile_data = None
@@ -176,27 +230,61 @@ def view_profile(request):
 
 @login_required
 def view_booked_flights(request):
+    """Displays a list of flights booked by the passenger.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered booked flights page.
+    """
     passenger = request.user.passenger_profile
     bookings = Booking.objects.filter(passenger=passenger)
     return render(request, 'users/view_booked_flights.html', {'bookings': bookings})
 
-
-    context = {
-        'page_title': 'Admin Control Panel'
-    }
-    return render(request, 'users/admin_dashboard.html', context)
-
 @login_required
 def admin_manage_users(request):
+    """Renders the user management dashboard page.
+
+    This view is a placeholder for the user management interface where admins
+    can view and modify user accounts.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered user management page.
+    """
     return render(request, 'users/admin_manage_users.html')
 
 
 @login_required
 def admin_site_settings(request):
+    """Renders the site settings configuration page.
+
+    This view is a placeholder for global site settings management.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered site settings page.
+    """
     return render(request, 'users/admin_site_settings.html')
 
 @login_required
 def profile(request):
+    """Handles profile updates for both admins and passengers.
+
+    Displays the appropriate profile form (Admin or Passenger) based on the user's
+    status. Handles form submission to update user and profile details.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered profile edit page (users/profile.html).
+    """
 
     user = request.user
 
@@ -216,10 +304,9 @@ def profile(request):
             u_form = UserUpdateForm(instance=user)
         
         p_form = None 
-        profile_data = admin_profile # To display hire date in template
+        profile_data = admin_profile
 
 
-    # passenger logic ------
     else:
 
         passenger_profile, created = PassengerProfile.objects.get_or_create(user=user)

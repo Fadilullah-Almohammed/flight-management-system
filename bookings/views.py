@@ -13,10 +13,18 @@ from django.utils import timezone
 from xhtml2pdf import pisa
 import math
 
-# Create your views here.
+
 
 @login_required
 def my_bookings(request):
+    """Displays a list of bookings for the currently logged-in user.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered 'my_bookings' page with the user's booking history.
+    """
 
     user_bookings = Booking.objects.filter(passenger__user=request.user).order_by('-booking_date')
 
@@ -25,11 +33,23 @@ def my_bookings(request):
 
 @login_required
 def seat_selection(request, flight_id, seat_class):
+    """Handles seat selection for a specific flight and seat class.
+
+    Retrieves the flight and aircraft details, calculates available and taken seats,
+    and organizes them into class-specific row ranges for the template.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        flight_id: The unique identifier for the flight.
+        seat_class: The class of seat selected (e.g., 'Economy').
+
+    Returns:
+        HttpResponse: The rendered 'seat_selection' page.
+    """
     flight = get_object_or_404(Flight, flight_number=flight_id)
     aircraft = flight.aircraft
 
 
-    # 1. Get Passenger Counts
     try:
         adults = int(request.GET.get('adults', 1))
         children = int(request.GET.get('children', 0))
@@ -38,10 +58,8 @@ def seat_selection(request, flight_id, seat_class):
         children = 0
     total_passengers = adults + children
 
-    # 2. Get Taken Seats
     taken_seats = list(Ticket.objects.filter(booking__flight=flight).values_list('seat_number', flat=True))
 
-    # 3. Calculate Rows
     seats_per_row = 6
     
     first_rows_count = math.ceil(aircraft.first_class / seats_per_row)
@@ -49,7 +67,6 @@ def seat_selection(request, flight_id, seat_class):
     eco_rows_count = math.ceil(aircraft.economy_class / seats_per_row)
 
 
-    # Define Row Ranges
     first_start = 1
     first_end = first_rows_count
     
@@ -59,7 +76,6 @@ def seat_selection(request, flight_id, seat_class):
     eco_start = bus_end + 1
     eco_end = bus_end + eco_rows_count
 
-    # Generate ranges (Python range is exclusive at the end, so we add +1)
     first_range = range(first_start, first_end + 1) if first_rows_count > 0 else None
     bus_range = range(bus_start, bus_end + 1) if bus_rows_count > 0 else None
     eco_range = range(eco_start, eco_end + 1) if eco_rows_count > 0 else None
@@ -82,11 +98,21 @@ def seat_selection(request, flight_id, seat_class):
 
 @login_required
 def passenger_details(request):
+    """Handles the submission of passenger details for selected seats.
+
+    Processes seat selection data, calculates ticket prices, and generates simple
+    forms for each passenger's details.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered 'passenger_details' page or a redirect.
+    """
     if request.method == 'POST':
         flight_id = request.POST.get('flight_id')
         seats_str = request.POST.get('selected_seats')
         
-        # 1. CAPTURE seat_class FROM PREVIOUS FORM
         seat_class = request.POST.get('seat_class', 'Economy').capitalize()
 
         
@@ -97,7 +123,6 @@ def passenger_details(request):
         flight = get_object_or_404(Flight, flight_number=flight_id)
         seats_list = seats_str.split(',')
         
-        # Calculate Total Price for Display
         if seat_class == 'Business':
             ticket_price = flight.business_price
         elif seat_class == 'First':
@@ -116,7 +141,7 @@ def passenger_details(request):
             'flight': flight,
             'forms_list': forms_list, 
             'seats_str': seats_str,
-            'seat_class': seat_class, # 2. PASS seat_class TO TEMPLATE
+            'seat_class': seat_class, 
             'total_price': total_price
         }
         return render(request, 'bookings/passenger_details.html', context)
@@ -126,11 +151,21 @@ def passenger_details(request):
 
 @login_required
 def create_booking(request):
+    """Creates a new booking and associated tickets.
+
+    Validates the submitted forms, creates a Booking record, and saves Ticket records
+    for each seat.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: A redirect to the payment process or back to the dashboard on failure.
+    """
     if request.method == 'POST':
         flight_id = request.POST.get('flight_id')
         seats_str = request.POST.get('seats_str')
         
-        # 1. CAPTURE seat_class FROM FORM
         seat_class = request.POST.get('seat_class', 'Economy')
         seat_class = seat_class.capitalize()
         
@@ -138,7 +173,6 @@ def create_booking(request):
         seats_list = seats_str.split(',')
         flight = get_object_or_404(Flight, flight_number=flight_id)
         
-        # Determine specific price based on class
         if seat_class == 'Business':
             ticket_price = flight.business_price
         elif seat_class == 'First':
@@ -174,12 +208,11 @@ def create_booking(request):
         except PassengerProfile.DoesNotExist:
             profile = None
 
-        # 2. SAVE Booking with correct seat_class
         booking = Booking.objects.create(
             flight=flight,
             status='Pending',
             number_of_passengers=len(seats_list),
-            seat_class=seat_class,  # Use variable
+            seat_class=seat_class,
             passenger=profile
         )
 
@@ -187,8 +220,6 @@ def create_booking(request):
             ticket = form.save(commit=False) 
             ticket.booking = booking         
             ticket.seat_number = seat
-            # (Optional) If Ticket model has price field, save it here
-            # ticket.price = ticket_price 
             ticket.save()                    
             
         messages.success(request, "Booking created! Redirecting to payment...")
@@ -199,8 +230,17 @@ def create_booking(request):
 
 @login_required
 def booking_details(request, booking_id):
-    """
-    Show details of a specific booking and list its tickets.
+    """Show details of a specific booking and list its tickets.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        booking_id: The unique identifier of the booking.
+
+    Returns:
+        HttpResponse: The rendered 'booking_details' page.
+
+    Raises:
+        Http404: If the passenger profile does not exist.
     """
     try:
         passenger = request.user.passenger_profile
@@ -219,8 +259,14 @@ def booking_details(request, booking_id):
 
 @login_required
 def cancel_ticket(request, ticket_id):
-    """
-    Cancel a specific ticket. If it's the last ticket, cancel the booking.
+    """Cancel a specific ticket. If it's the last ticket, cancel the booking.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        ticket_id: The unique identifier of the ticket.
+
+    Returns:
+        HttpResponse: A redirect to the booking details or my bookings page.
     """
     try:
         passenger = request.user.passenger_profile
@@ -231,7 +277,6 @@ def cancel_ticket(request, ticket_id):
             messages.warning(request, "This booking is already cancelled.")
             return redirect('booking_details', booking_id=booking.booking_id)
 
-        # Check if flight has passed
         if booking.flight.departure_datetime < timezone.now():
             messages.error(request, "Cannot cancel a ticket for a past flight.")
             return redirect('booking_details', booking_id=booking.booking_id)
@@ -259,6 +304,15 @@ def cancel_ticket(request, ticket_id):
 
 @login_required
 def download_ticket_pdf(request, booking_id):
+    """Generates and downloads a PDF ticket for a specific booking.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        booking_id: The unique identifier of the booking.
+
+    Returns:
+        HttpResponse: A PDF file download or an error message.
+    """
     booking = get_object_or_404(Booking, booking_id=booking_id, passenger__user=request.user)
     
     template_path = 'bookings/ticket_pdf.html' 

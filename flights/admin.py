@@ -1,13 +1,11 @@
 from django.contrib import admin
 from .models import *
 
-# Register your models here.
+
 
 @admin.register(Aircraft)
 class AircraftAdmin(admin.ModelAdmin):
-    # This controls what columns you see in the list view
     list_display = ('model', 'economy_class', 'business_class', 'first_class')
-    # This allows you to search by model name
     search_fields = ('model',)
 
 
