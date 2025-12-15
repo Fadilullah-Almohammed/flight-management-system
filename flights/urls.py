@@ -1,3 +1,11 @@
+"""URL configuration for the flights application.
+
+This module maps URL patterns to views related to flight management, including:
+*   Viewing flight lists and details.
+*   Searching for flights.
+*   Administrative tasks like adding, editing, and deleting flights.
+*   Generating reports and manifests.
+"""
 from django.urls import path
 from . import views
 

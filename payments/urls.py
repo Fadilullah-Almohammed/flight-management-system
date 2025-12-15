@@ -1,3 +1,8 @@
+"""URL configuration for the payments application.
+
+This module handles URL routing for payment processing views, specifically
+initiating payments for confirmed bookings.
+"""
 from django.urls import path
 from . import views
 
