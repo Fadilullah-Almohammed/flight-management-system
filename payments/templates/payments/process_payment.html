@@ -24,6 +24,11 @@
 {% endblock %}
 
 {% block content %}
+<div class="mb-3">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i> Back
+            </a>
+        </div>
 <div class="container">
     
     <div class="mb-4">
@@ -189,7 +194,7 @@
         
         const successModal = new bootstrap.Modal(document.getElementById('successModal'));
 
-        // 1. Card Detection
+
         cardInput.addEventListener('input', function (e) {
             let value = e.target.value.replace(/[^\d]/g, '');
             e.target.value = value.replace(/(.{4})/g, '$1 ').trim();
@@ -203,7 +208,7 @@
             } else iconSpan.innerHTML = '<i class="bi bi-credit-card text-secondary"></i>';
         });
 
-        // 2. Expiry Validation
+        
         expiryInput.addEventListener('blur', function() {
             const value = this.value;
             if (!/^\d{2}\/\d{2}$/.test(value)) { this.classList.add('is-invalid'); return; }
@@ -223,7 +228,7 @@
             if (input.length > 2) e.target.value = month + '/' + year; else e.target.value = input;
         });
 
-        // 3. Submit Flow
+        
         form.addEventListener('submit', function(event) {
             event.preventDefault();
             event.stopPropagation();
@@ -235,15 +240,15 @@
 
             if (isValid && form.checkValidity()) {
                 
-                // STEP 1: Change Button State to Loading
+                
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing Payment...';
 
-                // STEP 2: Show Success Modal
+                
                 setTimeout(function() {
                     successModal.show();
 
-                    // STEP 3: Submit Form to Django (After 2s delay)
+                    
                     setTimeout(function() {
                         form.submit(); 
                     }, 2000);

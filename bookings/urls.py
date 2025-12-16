@@ -17,5 +17,7 @@ urlpatterns = [
     path('create-booking/', views.create_booking, name='create_booking'),
     path('booking-details/<str:booking_id>', views.booking_details, name='booking_details'),
     path('download-eticket/<int:booking_id>/', views.download_ticket_pdf, name='download_ticket_pdf'),
-    path('cancel-ticket/<int:ticket_id>', views.cancel_ticket, name='cancel_ticket')
+    path('passenger-dashboard/', views.passenger_dashboard, name='passenger_dashboard'),
+    path('cancel-ticket/<int:ticket_id>', views.cancel_ticket, name='cancel_ticket'),
+    
 ]

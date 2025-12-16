@@ -95,7 +95,7 @@ class Command(BaseCommand):
         base_time = timezone.now() + timedelta(days=1)
         flights_created = []
         
-        for i in range(1, 51): # 50 Flights
+        for i in range(1, 700): # 50 Flights
             origin = random.choice(db_airports)
             dest = random.choice(db_airports)
             while dest == origin:

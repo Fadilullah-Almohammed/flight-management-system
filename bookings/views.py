@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import *
 from bookings.models import *
-from flights.models import Flight
+from flights.models import Flight, Airport
 from users.models import PassengerProfile
 from .forms import *
 from django.template.loader import get_template
@@ -347,3 +347,31 @@ def download_ticket_pdf(request, booking_id):
         
     return response
 
+@login_required
+def passenger_dashboard(request):
+    """Renders the passenger dashboard with flight search and upcoming bookings.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: The rendered passenger dashboard.
+    """
+    
+    airports = Airport.objects.all().order_by('city')
+
+    now = timezone.now()
+    
+    upcoming_bookings = Booking.objects.filter(
+        passenger__user=request.user,     
+        flight__departure_datetime__gt=now  
+    ).exclude(
+        status='Cancelled'                  
+    ).order_by('flight__departure_datetime')[:3] 
+
+    context = {
+        'airports': airports,
+        'upcoming_bookings': upcoming_bookings
+    }
+
+    return render(request, 'users/passenger_dashboard.html', context)

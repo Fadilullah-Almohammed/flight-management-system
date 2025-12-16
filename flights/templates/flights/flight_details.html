@@ -17,34 +17,34 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            
+
             <div class="mb-3">
-                <a href="{% url 'passenger_dashboard' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i> Back
                 </a>
             </div>
 
             <div class="card details-card">
                 <div class="card-body p-4 p-sm-5">
-                    
+
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <div>
                             <h2 class="mb-0">Flight {{ flight.flight_number }}</h2>
                             <p class="fs-5 text-muted mb-0">
-                                {{ flight.departure_airport.city }} ({{ flight.departure_airport.airport_code }}) 
-                                to 
+                                {{ flight.departure_airport.city }} ({{ flight.departure_airport.airport_code }})
+                                to
                                 {{ flight.arrival_airport.city }} ({{ flight.arrival_airport.airport_code }})
                             </p>
                         </div>
-                        
+
                         <div class="text-end">
                             <h3 class="mb-0 text-primary">
                                 {% if seat_class|lower == 'Business' %}
-                                    {{ flight.business_price }}
+                                {{ flight.business_price }}
                                 {% elif seat_class|lower == 'First' %}
-                                    {{ flight.first_class_price }}
+                                {{ flight.first_class_price }}
                                 {% else %}
-                                    {{ flight.economy_price }}
+                                {{ flight.economy_price }}
                                 {% endif %}
                                 SAR
                             </h3>
@@ -55,12 +55,14 @@
                     <div class="row g-4 mb-4">
                         <div class="col-md-4">
                             <h6 class="text-muted">Departure</h6>
-                            <h5><i class="bi bi-calendar-event me-2"></i> {{ flight.departure_datetime|date:"M d, Y" }}</h5>
+                            <h5><i class="bi bi-calendar-event me-2"></i> {{ flight.departure_datetime|date:"M d, Y" }}
+                            </h5>
                             <h5><i class="bi bi-clock me-2"></i> {{ flight.departure_datetime|time:"H:i" }}</h5>
                         </div>
                         <div class="col-md-4">
                             <h6 class="text-muted">Arrival</h6>
-                            <h5><i class="bi bi-calendar-event me-2"></i> {{ flight.arrival_datetime|date:"M d, Y" }}</h5>
+                            <h5><i class="bi bi-calendar-event me-2"></i> {{ flight.arrival_datetime|date:"M d, Y" }}
+                            </h5>
                             <h5><i class="bi bi-clock me-2"></i> {{ flight.arrival_datetime|time:"H:i" }}</h5>
                         </div>
                         <div class="col-md-4">
@@ -69,27 +71,30 @@
                             <p class="mb-1"><strong>Aircraft:</strong> {{ flight.aircraft.model }}</p>
                         </div>
                     </div>
-                    
+
                     <hr class="my-4">
 
                     <form action="{% url 'seat_selection' flight.flight_number seat_class %}" method="get">
-                        
+
                         <h4 class="mb-3 text-center">Select Passengers</h4>
                         <div class="row justify-content-center">
                             <div class="col-md-8">
                                 <div class="row g-3">
                                     <div class="col-sm-6">
                                         <label for="adultsCount" class="form-label">Adults (12+)</label>
-                                        <input type="number" name="adults" class="form-control form-control-lg" id="adultsCount" value="1" min="1" required>
+                                        <input type="number" name="adults" class="form-control form-control-lg"
+                                            id="adultsCount" value="1" min="1" required>
                                     </div>
                                     <div class="col-sm-6">
                                         <label for="childrenCount" class="form-label">Children (below 12)</label>
-                                        <input type="number" name="children" class="form-control form-control-lg" id="childrenCount" value="0" min="0" required>
+                                        <input type="number" name="children" class="form-control form-control-lg"
+                                            id="childrenCount" value="0" min="0" required>
                                     </div>
                                 </div>
-                                
+
                                 <div class="text-center mt-4">
-                                    <h5 class="mb-0">Total Passengers: <span id="totalPassengers" class="text-primary fw-bold">1</span></h5>
+                                    <h5 class="mb-0">Total Passengers: <span id="totalPassengers"
+                                            class="text-primary fw-bold">1</span></h5>
                                 </div>
 
                                 <div class="d-grid mt-4">
@@ -104,13 +109,13 @@
                 </div>
             </div>
         </div>
-    </div> 
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const adultsInput = document.getElementById("adultsCount");
         const childrenInput = document.getElementById("childrenCount");
         const totalDisplay = document.getElementById("totalPassengers");
@@ -119,7 +124,7 @@
             const adults = parseInt(adultsInput.value) || 0;
             const children = parseInt(childrenInput.value) || 0;
             const total = adults + children;
-            
+
             totalDisplay.textContent = total;
         }
 
