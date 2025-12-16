@@ -144,3 +144,6 @@ MESSAGE_TAGS = {
 
 # Print emails to the console instead of sending them (for development)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Redirect to home URL after login (Default to home)
+LOGIN_URL = 'user_login'
