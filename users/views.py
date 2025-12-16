@@ -63,6 +63,12 @@ def user_login(request: HttpRequest) -> HttpResponse:
         HttpResponse: The rendered login page or a redirect to the dashboard.
     """
 
+    if request.user.is_authenticated:
+        if request.user.is_staff:
+            return redirect('admin_dashboard')
+        else:
+            return redirect('passenger_dashboard')
+
 
     if request.method == 'POST':
 
