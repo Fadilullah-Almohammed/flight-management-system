@@ -1,3 +1,11 @@
+"""URL configuration for the bookings application.
+
+This module defines URL patterns for booking-related operations, such as:
+*   Viewing user bookings.
+*   Selecting seats and entering passenger details.
+*   Creating and cancelling bookings.
+*   Downloading e-tickets.
+"""
 from django.urls import path
 from . import views
 
